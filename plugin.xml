@@ -18,7 +18,7 @@
          point="org.eclipse.ui.handlers">
       <handler
             commandId="LearnableProgramming.commands.sampleCommand"
-            class="learnableprogramming.handlers.SampleHandler">
+            class="nl.avans.plugin.handlers.SampleHandler">
       </handler>
    </extension>
    <extension
@@ -61,14 +61,15 @@
    <extension
          point="org.eclipse.ui.workbench.texteditor.rulerColumns">
       <column
-            class="learnableprogramming.ContributedRulerColumn1"
+            class="nl.avans.plugin.AvansRulerColumn"
             enabled="true"
             global="true"
             id="LearnableProgramming.column1"
             includeInMenu="true"
-            name="Learnable">
+            name="Avans">
+         <targetClass class="org.eclipse.ui.texteditor.AbstractDecoratedTextEditor"></targetClass>
          <placement
-               gravity="1.0">
+               gravity="0.5">
          </placement>
       </column>
    </extension>

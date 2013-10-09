@@ -1,4 +1,4 @@
-package learnableprogramming.handlers;
+package nl.avans.plugin.handlers;
 
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
