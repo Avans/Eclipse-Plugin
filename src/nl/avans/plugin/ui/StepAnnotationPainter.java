@@ -10,6 +10,7 @@ import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.widgets.Display;
 
 public class StepAnnotationPainter implements IDrawingStrategy,
 		LineBackgroundListener {
@@ -18,20 +19,33 @@ public class StepAnnotationPainter implements IDrawingStrategy,
 	// AnnotationPainter
 	static final String STRATEGY_ID = "nl.avans.step-annotation-strategy";
 
-	static final Color BACKGROUND_COLOR = new Color(null, 255, 255, 180);
-	private static final Color TEXT_COLOR = new Color(null, 50, 50, 50);
+	static final Color BACKGROUND_COLOR = new Color(Display.getCurrent(), 255,
+			255, 180);
+	private static final Color TEXT_COLOR = new Color(Display.getCurrent(), 50,
+			50, 50);
+	LineBackgroundListener backgroundClearer = new LineBackgroundListener() {
+		@Override
+		public void lineGetBackground(LineBackgroundEvent event) {
+			event.lineBackground = null;
+		}
+	};
 
 	@Override
 	public void draw(Annotation annotation, GC gc, StyledText textWidget,
 			int offset, int length, Color color) {
 
-		StepLineAnnotion stepLineAnnotation = (StepLineAnnotion) annotation;
+		StepLineAnnotation stepLineAnnotation = (StepLineAnnotation) annotation;
 
+		int lineStartOffset = textWidget.getOffsetAtLine(stepLineAnnotation
+				.getLine());
+		int lengthToNextLineStartOffset = textWidget.getOffsetAtLine(stepLineAnnotation
+				.getLine() + 1) - lineStartOffset;
+		
 		if (gc != null) {
-			textWidget.addLineBackgroundListener(stepLineAnnotation);
 
-			int lineStartOffset = textWidget.getOffsetAtLine(stepLineAnnotation
-					.getLine());
+			textWidget.addLineBackgroundListener(stepLineAnnotation);
+			textWidget.redrawRange(lineStartOffset, lengthToNextLineStartOffset, true); // Draw background
+
 			int y = textWidget.getLocationAtOffset(lineStartOffset).y;
 
 			gc.setFont(new Font(gc.getDevice(), "Arial", 12, SWT.BOLD));
@@ -41,7 +55,8 @@ public class StepAnnotationPainter implements IDrawingStrategy,
 					stepLineAnnotation.getDrawOffset(), y);
 		} else {
 			textWidget.removeLineBackgroundListener(stepLineAnnotation);
-			textWidget.redrawRange(offset, length, true);
+			textWidget.addLineBackgroundListener(backgroundClearer);
+			textWidget.redrawRange(lineStartOffset, lengthToNextLineStartOffset, true);
 		}
 
 	}

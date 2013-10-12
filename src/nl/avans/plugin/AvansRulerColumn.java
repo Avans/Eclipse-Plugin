@@ -1,44 +1,31 @@
 package nl.avans.plugin;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-
 import nl.avans.plugin.ui.StepDisplayer;
+import nl.avans.plugin.ui.StepLine;
 
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.internal.ui.javaeditor.CompilationUnitEditor;
 import org.eclipse.jdt.internal.ui.javaeditor.EditorUtility;
-import org.eclipse.jdt.internal.ui.javaeditor.JavaEditor;
 import org.eclipse.jface.text.DocumentEvent;
-import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IDocumentListener;
-import org.eclipse.jface.text.Position;
-import org.eclipse.jface.text.source.Annotation;
-import org.eclipse.jface.text.source.AnnotationPainter;
-import org.eclipse.jface.text.source.AnnotationPainter.IDrawingStrategy;
-import org.eclipse.jface.text.source.AnnotationPainter.ITextStyleStrategy;
-import org.eclipse.jface.text.source.IAnnotationAccess;
-import org.eclipse.jface.text.source.IAnnotationModel;
-import org.eclipse.jface.text.source.ISourceViewer;
-import org.eclipse.jface.text.source.SourceViewer;
-import org.eclipse.swt.custom.LineBackgroundEvent;
-import org.eclipse.swt.custom.LineBackgroundListener;
-import org.eclipse.swt.custom.StyleRange;
-import org.eclipse.swt.custom.StyledText;
-import org.eclipse.swt.graphics.Color;
+import org.eclipse.jface.text.source.AbstractRulerColumn;
+import org.eclipse.jface.text.source.CompositeRuler;
+import org.eclipse.jface.text.source.IVerticalRulerListener;
+import org.eclipse.jface.text.source.VerticalRulerEvent;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseListener;
+import org.eclipse.swt.events.MouseMoveListener;
+import org.eclipse.swt.events.MouseTrackListener;
 import org.eclipse.swt.graphics.GC;
-import org.eclipse.ui.texteditor.AbstractDecoratedTextEditor;
-import org.eclipse.ui.texteditor.AnnotationPreference;
-import org.eclipse.ui.texteditor.IDocumentProvider;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Menu;
 import org.eclipse.ui.texteditor.ITextEditor;
-import org.eclipse.ui.texteditor.SourceViewerDecorationSupport;
+import org.eclipse.ui.texteditor.rulers.IContributedRulerColumn;
 import org.eclipse.ui.texteditor.rulers.RulerColumnDescriptor;
 
-public class AvansRulerColumn extends
-		org.eclipse.jface.text.source.AbstractRulerColumn implements
-		org.eclipse.ui.texteditor.rulers.IContributedRulerColumn,
-		IDocumentListener {
+public class AvansRulerColumn extends AbstractRulerColumn implements
+		IContributedRulerColumn, IDocumentListener, MouseMoveListener, MouseListener, MouseTrackListener {
 
 	RulerColumnDescriptor descriptor;
 	ITextEditor editor;
@@ -56,6 +43,17 @@ public class AvansRulerColumn extends
 	public AvansRulerColumn() {
 		setWidth(30);
 	}
+	
+	@Override
+	public Control createControl(CompositeRuler parentRuler,
+			Composite parentControl) {
+		Control control = super.createControl(parentRuler, parentControl);
+		control.addMouseMoveListener(this);
+		control.addMouseTrackListener(this);
+		return control;
+	}
+	
+	
 
 	@Override
 	public RulerColumnDescriptor getDescriptor() {
@@ -66,12 +64,14 @@ public class AvansRulerColumn extends
 	public void setDescriptor(RulerColumnDescriptor descriptor) {
 		this.descriptor = descriptor;
 	}
+	
+	private StepDisplayer stepLineDisplayer;
 
 	@Override
 	public void setEditor(ITextEditor editor) {
 		CompilationUnitEditor cueditor = (CompilationUnitEditor) editor;
-		
-		new StepDisplayer(cueditor);
+
+		stepLineDisplayer = new StepDisplayer(cueditor);
 		this.editor = editor;
 	}
 
@@ -107,5 +107,48 @@ public class AvansRulerColumn extends
 		 * CoreException(getErrorStatus("Editor not showing a CU or class file",
 		 * null)); //$NON-NLS-1$ } fTypeRoot= typeRoot;
 		 */
+	}
+
+	@Override
+	public void mouseMove(MouseEvent e) {
+		//System.out.println(e.x + ", " + e.y);
+		
+	}
+
+	@Override
+	public void mouseDoubleClick(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseDown(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseUp(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseEnter(MouseEvent e) {
+		System.out.println("Enter");
+		stepLineDisplayer.addStepLine(new StepLine("Hallo wereld", 5));
+	}
+
+	@Override
+	public void mouseExit(MouseEvent e) {
+		System.out.println("Exit");
+		stepLineDisplayer.removeAllStepLines();
+		
+	}
+
+	@Override
+	public void mouseHover(MouseEvent e) {
+		
+		
 	}
 }

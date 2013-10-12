@@ -11,13 +11,13 @@ import org.eclipse.swt.custom.StyledText;
  * @author paulwagener
  * 
  */
-public class StepLineAnnotion extends Annotation implements
+public class StepLineAnnotation extends Annotation implements
 		LineBackgroundListener {
 
 	private int draw_offset = 300;
 	private StepLine stepLine;
 
-	public StepLineAnnotion(StepLine stepLine) {
+	public StepLineAnnotation(StepLine stepLine) {
 		super(StepDisplayer.ANNOTATION_TYPE, false, "");
 		this.stepLine = stepLine;
 	}

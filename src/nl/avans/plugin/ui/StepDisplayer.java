@@ -2,6 +2,8 @@ package nl.avans.plugin.ui;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.HashSet;
+import java.util.Set;
 
 import nl.avans.plugin.step.Step;
 
@@ -39,8 +41,11 @@ public class StepDisplayer {
 	// The 'type' that all annotations displayed by this class will have
 	final static String ANNOTATION_TYPE = "nl.avans.step-annotation";
 	
+	Set<StepLineAnnotation> activeAnnotations = new HashSet<StepLineAnnotation>();
+	AnnotationPainter painter;
 	private IAnnotationModel annotationModel;
-
+	CompilationUnitEditor editor;
+	
 	/**
 	 * Create a StepDisplayer, it takes an Eclipse editor which is the editor in
 	 * which the step annotations will be displayed in.
@@ -48,9 +53,8 @@ public class StepDisplayer {
 	 * The editor will be augmented to allow for custom painting
 	 */
 	public StepDisplayer(CompilationUnitEditor editor) {
-		// this.editor = editor;
-		AnnotationPainter painter = getAnnotationPainterForEditor(editor);
-		System.out.println("Gots me a painter: " + painter);
+		this.editor = editor;
+		painter = getAnnotationPainterForEditor(editor);
 		
 		if(painter == null)
 			return;
@@ -61,30 +65,39 @@ public class StepDisplayer {
 		painter.addAnnotationType(ANNOTATION_TYPE, StepAnnotationPainter.STRATEGY_ID);
 		painter.addDrawingStrategy(StepAnnotationPainter.STRATEGY_ID, new StepAnnotationPainter());
 		
-		// Get a reference to the annotationModel, the thing we can use to add and remove ours Annotations.
+		// Get a reference to the annotationModel, the thing we can use to add and remove our Annotations.
 		IDocumentProvider documentProvider = editor.getDocumentProvider();
 		annotationModel = documentProvider
 				.getAnnotationModel(editor.getEditorInput());
-		
-		// TEST: add an annotation
-		StepLine stepLine = new StepLine("zet x op 0", 3);
-		annotationModel.addAnnotation(new StepLineAnnotion(stepLine), new Position(0));
 	}
+	
+	
 
 	/**
 	 * Shows the step in the
 	 * 
 	 * @param step
 	 */
-	public void showStep(Step step) {
-		hideSteps();
+	public void addStepLine(StepLine stepLine) {
+		StepLineAnnotation stepLineAnnotation = new StepLineAnnotation(stepLine);
+		annotationModel.addAnnotation(stepLineAnnotation, new Position(0));
+		activeAnnotations.add(stepLineAnnotation);
+		
+		painter.paint(AnnotationPainter.INTERNAL);
+		editor.getViewer().getTextWidget().redraw();
 	}
 
 	/**
-	 * Hide any active step in the editor.
+	 * Remove 
 	 */
-	public void hideSteps() {
-
+	public void removeAllStepLines() {
+		for(StepLineAnnotation stepLineAnnotation : activeAnnotations) {
+			annotationModel.removeAnnotation(stepLineAnnotation);
+		}
+		activeAnnotations.clear();
+		
+		painter.paint(AnnotationPainter.INTERNAL);
+		editor.getViewer().getTextWidget().redraw();
 	}
 
 	/**
