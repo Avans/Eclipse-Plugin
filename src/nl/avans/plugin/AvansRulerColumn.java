@@ -4,6 +4,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import nl.avans.plugin.ui.StepDisplayer;
+
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.internal.ui.javaeditor.CompilationUnitEditor;
 import org.eclipse.jdt.internal.ui.javaeditor.EditorUtility;
@@ -67,99 +69,9 @@ public class AvansRulerColumn extends
 
 	@Override
 	public void setEditor(ITextEditor editor) {
-
-		IDocumentProvider documentProvider = editor.getDocumentProvider();
-		IDocument document = documentProvider.getDocument(editor
-				.getEditorInput());
-
-		IAnnotationModel annotationModel = documentProvider
-				.getAnnotationModel(editor.getEditorInput());
-
-		String annotationType = "nl.avans.stepannotation";
-		Annotation annotation = new Annotation(annotationType, false,
-				"hallo wereld!");
-		annotationModel.addAnnotation(annotation, new Position(10, 50));
-		
 		CompilationUnitEditor cueditor = (CompilationUnitEditor) editor;
-		SourceViewer sv = (SourceViewer) cueditor.getViewer();
-		AbstractDecoratedTextEditor a = cueditor;
-
-		try {
-			Method m = AbstractDecoratedTextEditor.class.getDeclaredMethod(
-					"getSourceViewerDecorationSupport", ISourceViewer.class);
-			m.setAccessible(true);
-			SourceViewerDecorationSupport support = (SourceViewerDecorationSupport) m
-					.invoke(a, sv);
-			System.out.println(support);
-
-			m = SourceViewerDecorationSupport.class.getDeclaredMethod(
-					"showAnnotations", Object.class, boolean.class);
-			m.setAccessible(true);
-			m.invoke(support, null, false);
-
-			Field f = SourceViewerDecorationSupport.class
-					.getDeclaredField("fAnnotationPainter");
-			f.setAccessible(true);
-			AnnotationPainter annotationPainter = (AnnotationPainter) f
-					.get(support);
-
-			System.out.println(annotationPainter);
-
-			annotationPainter.addDrawingStrategy(annotationType,
-					new IDrawingStrategy() {
-
-						@Override
-						public void draw(Annotation annotation, GC gc,
-								StyledText textWidget, int offset, int length,
-								Color color) {
-							if (gc != null) {
-
-								gc.setForeground(new Color(null, 0, 255, 0));
-								gc.drawRectangle(0, 0, 300, 300);
-								// textWidget.setLineBackground(1, 3, );
-								textWidget
-										.addLineBackgroundListener(new LineBackgroundListener() {
-
-											@Override
-											public void lineGetBackground(
-													LineBackgroundEvent event) {
-												event.lineBackground = new Color(
-														null, 0, 0, 255);
-
-											}
-										});
-								gc.drawText("Omdat 5 < 6", 0, 0);
-
-							} else {
-
-								textWidget.redrawRange(offset, length, true);
-							}
-
-						}
-					});
-			annotationPainter.setAnnotationTypeColor(annotationType, new Color(
-					null, 0, 255, 0));
-			annotationPainter.addAnnotationType(annotationType, annotationType);
-		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SecurityException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InvocationTargetException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NoSuchMethodException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NoSuchFieldException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
+		
+		new StepDisplayer(cueditor);
 		this.editor = editor;
 	}
 
