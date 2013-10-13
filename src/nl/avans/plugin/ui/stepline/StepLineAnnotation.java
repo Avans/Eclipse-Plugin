@@ -27,8 +27,8 @@ public class StepLineAnnotation extends Annotation implements
 		StyledText styledText = (StyledText) event.widget;
 		int lineOffset = styledText.getOffsetAtLine(stepLine.getLine());
 		
-		if (event.lineOffset == lineOffset) {
-			event.lineBackground = StepAnnotationPainter.BACKGROUND_COLOR;
+		if (stepLine.isPrimary() && event.lineOffset == lineOffset) {
+			event.lineBackground = StepLineAnnotationPainter.BACKGROUND_COLOR;
 		}
 	}
 	
@@ -54,8 +54,8 @@ public class StepLineAnnotation extends Annotation implements
 		
 	}
 
-	public boolean isBold() {
-		return stepLine.isBold();
+	public boolean isPrimary() {
+		return stepLine.isPrimary();
 	}
 
 }

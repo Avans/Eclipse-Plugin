@@ -12,12 +12,12 @@ public class StepLine {
 	private int line;
 	
 	// Whether it the text is bold or not
-	private boolean bold;
+	private boolean primary;
 
-	public StepLine(String explanation, int line, boolean bold) {
+	public StepLine(String explanation, int line, boolean primary) {
 		this.explanation = explanation;
 		this.line = line;
-		this.bold = bold;
+		this.primary = primary;
 	}
 
 	public String getExplanation() {
@@ -28,7 +28,7 @@ public class StepLine {
 		return line;
 	}
 	
-	public boolean isBold() {
-		return bold;
+	public boolean isPrimary() {
+		return primary;
 	}
 }

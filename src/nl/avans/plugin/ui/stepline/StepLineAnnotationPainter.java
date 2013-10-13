@@ -9,15 +9,15 @@ import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.widgets.Display;
 
-public class StepAnnotationPainter implements IDrawingStrategy {
+public class StepLineAnnotationPainter implements IDrawingStrategy {
 
 	// The strategy id that we use to register ourselves in the
 	// AnnotationPainter
 	static final String STRATEGY_ID = "nl.avans.step-annotation-strategy";
 
 	static final Color BACKGROUND_COLOR = new Color(Display.getCurrent(), 255,
-			255, 180);
-	static final Color TEXT_COLOR = new Color(Display.getCurrent(), 50, 50, 50);
+			255, 150);
+	static final Color TEXT_COLOR = new Color(Display.getCurrent(), 150, 150, 150);
 
 	/**
 	 * Paints the explanation text in the editor. This method just paints the
@@ -33,8 +33,8 @@ public class StepAnnotationPainter implements IDrawingStrategy {
 					.getLine());
 			int y = textWidget.getLocationAtOffset(lineStartOffset).y;
 
-			gc.setFont(new Font(gc.getDevice(), "Arial", 12, stepLineAnnotation.isBold() ? SWT.BOLD : SWT.NORMAL));
-			gc.setBackground(BACKGROUND_COLOR);
+			gc.setFont(new Font(gc.getDevice(), "Arial", 12, SWT.NORMAL));
+			gc.setBackground(stepLineAnnotation.isPrimary() ? BACKGROUND_COLOR : textWidget.getBackground());
 			gc.setForeground(TEXT_COLOR);
 			gc.drawText(stepLineAnnotation.getText(),
 					stepLineAnnotation.getTextOffset(), y);

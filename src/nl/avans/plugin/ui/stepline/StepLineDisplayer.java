@@ -68,9 +68,9 @@ public class StepLineDisplayer {
 		painter.setAnnotationTypeColor(ANNOTATION_TYPE,
 				new Color(null, 0, 0, 0));
 		painter.addAnnotationType(ANNOTATION_TYPE,
-				StepAnnotationPainter.STRATEGY_ID);
-		painter.addDrawingStrategy(StepAnnotationPainter.STRATEGY_ID,
-				new StepAnnotationPainter());
+				StepLineAnnotationPainter.STRATEGY_ID);
+		painter.addDrawingStrategy(StepLineAnnotationPainter.STRATEGY_ID,
+				new StepLineAnnotationPainter());
 
 		// Get a reference to the annotationModel, the thing we can use to add
 		// and remove our Annotations.
