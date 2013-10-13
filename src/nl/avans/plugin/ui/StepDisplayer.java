@@ -92,7 +92,7 @@ public class StepDisplayer {
 	}
 
 	/**
-	 * Remove 
+	 * Remove all annotations from the view.
 	 */
 	public void removeAllStepLines() {
 		StyledText textWidget = editor.getViewer().getTextWidget();
