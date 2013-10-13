@@ -33,11 +33,11 @@ public class StepAnnotationPainter implements IDrawingStrategy {
 					.getLine());
 			int y = textWidget.getLocationAtOffset(lineStartOffset).y;
 
-			gc.setFont(new Font(gc.getDevice(), "Arial", 12, SWT.BOLD));
+			gc.setFont(new Font(gc.getDevice(), "Arial", 12, stepLineAnnotation.isBold() ? SWT.BOLD : SWT.NORMAL));
 			gc.setBackground(BACKGROUND_COLOR);
 			gc.setForeground(TEXT_COLOR);
 			gc.drawText(stepLineAnnotation.getText(),
-					stepLineAnnotation.getDrawOffset(), y);
+					stepLineAnnotation.getTextOffset(), y);
 		} else {
 			textWidget.redrawRange(offset, length, true);
 		}

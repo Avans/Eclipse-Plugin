@@ -1,5 +1,8 @@
 package nl.avans.plugin;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import nl.avans.plugin.ui.StepDisplayer;
 import nl.avans.plugin.ui.StepLine;
 
@@ -135,13 +138,16 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 
 	@Override
 	public void mouseEnter(MouseEvent e) {
-		System.out.println("Enter");
-		stepLineDisplayer.addStepLine(new StepLine("Hallo wereld", 5));
+		List<StepLine> list = new ArrayList<StepLine>();
+		list.add(new StepLine("Omdat 0 < 5...", 5, true));
+		list.add(new StepLine("...doen we dit", 6, false));
+		list.add(new StepLine("...en dit", 7, false));
+		list.add(new StepLine("...en proberen we opnieuw", 8, false));
+		stepLineDisplayer.showStepLines(list);
 	}
 
 	@Override
 	public void mouseExit(MouseEvent e) {
-		System.out.println("Exit");
 		stepLineDisplayer.removeAllStepLines();
 		
 	}

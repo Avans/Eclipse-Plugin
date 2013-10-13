@@ -14,7 +14,7 @@ import org.eclipse.swt.custom.StyledText;
 public class StepLineAnnotation extends Annotation implements
 		LineBackgroundListener {
 
-	private int draw_offset = 300;
+	private int textOffset = 300;
 	private StepLine stepLine;
 
 	public StepLineAnnotation(StepLine stepLine) {
@@ -41,12 +41,21 @@ public class StepLineAnnotation extends Annotation implements
 	 * Returns how far from the left the explanation should be displayed (in pixels)
 	 * @return
 	 */
-	public int getDrawOffset() {
-		return draw_offset;
+	public int getTextOffset() {
+		return textOffset;
 	}
 
 	public int getLine() {
 		return stepLine.getLine();
+	}
+
+	public void setTextOffset(int textOffset) {
+		this.textOffset = textOffset;
+		
+	}
+
+	public boolean isBold() {
+		return stepLine.isBold();
 	}
 
 }

@@ -8,12 +8,16 @@ public class StepLine {
 	// The text to be displayed next to the line
 	private String explanation;
 	
-	// The line
+	// The line in the source code that is explained
 	private int line;
+	
+	// Whether it the text is bold or not
+	private boolean bold;
 
-	public StepLine(String explanation, int line) {
+	public StepLine(String explanation, int line, boolean bold) {
 		this.explanation = explanation;
 		this.line = line;
+		this.bold = bold;
 	}
 
 	public String getExplanation() {
@@ -22,5 +26,9 @@ public class StepLine {
 
 	public int getLine() {
 		return line;
+	}
+	
+	public boolean isBold() {
+		return bold;
 	}
 }
