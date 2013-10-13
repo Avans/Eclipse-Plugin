@@ -1,4 +1,4 @@
-package nl.avans.plugin.ui;
+package nl.avans.plugin.ui.stepline;
 
 import org.eclipse.jface.text.source.Annotation;
 import org.eclipse.swt.custom.LineBackgroundEvent;
@@ -18,7 +18,7 @@ public class StepLineAnnotation extends Annotation implements
 	private StepLine stepLine;
 
 	public StepLineAnnotation(StepLine stepLine) {
-		super(StepDisplayer.ANNOTATION_TYPE, false, "");
+		super(StepLineDisplayer.ANNOTATION_TYPE, false, "");
 		this.stepLine = stepLine;
 	}
 

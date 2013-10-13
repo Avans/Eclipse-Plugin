@@ -1,4 +1,4 @@
-package nl.avans.plugin.ui;
+package nl.avans.plugin.ui.stepline;
 
 import org.eclipse.jface.text.source.Annotation;
 import org.eclipse.jface.text.source.AnnotationPainter.IDrawingStrategy;

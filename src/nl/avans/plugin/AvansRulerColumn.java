@@ -3,8 +3,8 @@ package nl.avans.plugin;
 import java.util.ArrayList;
 import java.util.List;
 
-import nl.avans.plugin.ui.StepDisplayer;
-import nl.avans.plugin.ui.StepLine;
+import nl.avans.plugin.ui.stepline.StepLineDisplayer;
+import nl.avans.plugin.ui.stepline.StepLine;
 
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.internal.ui.javaeditor.CompilationUnitEditor;
@@ -68,13 +68,13 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 		this.descriptor = descriptor;
 	}
 	
-	private StepDisplayer stepLineDisplayer;
+	private StepLineDisplayer stepLineDisplayer;
 
 	@Override
 	public void setEditor(ITextEditor editor) {
 		CompilationUnitEditor cueditor = (CompilationUnitEditor) editor;
 
-		stepLineDisplayer = new StepDisplayer(cueditor);
+		stepLineDisplayer = new StepLineDisplayer(cueditor);
 		this.editor = editor;
 	}
 

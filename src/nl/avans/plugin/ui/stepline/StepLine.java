@@ -1,4 +1,4 @@
-package nl.avans.plugin.ui;
+package nl.avans.plugin.ui.stepline;
 
 /**
  * Model class for a bit of text that is to be displayed next to a line of

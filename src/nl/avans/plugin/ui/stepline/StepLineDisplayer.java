@@ -1,4 +1,4 @@
-package nl.avans.plugin.ui;
+package nl.avans.plugin.ui.stepline;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -33,11 +33,13 @@ import org.eclipse.ui.texteditor.SourceViewerDecorationSupport;
  * @author Paul Wagener
  * 
  */
-public class StepDisplayer {
+public class StepLineDisplayer {
 
 	// The 'type' that all annotations displayed by this class will have
 	final static String ANNOTATION_TYPE = "nl.avans.step-annotation";
 
+	// The distance the explanation text will have from the left side of the
+	// editor, if there is no overlap with source code.
 	private final static int DEFAULT_TEXT_OFFSET = 200;
 
 	// The minimal horizontal margin between the source code and the explanation
@@ -55,7 +57,7 @@ public class StepDisplayer {
 	 * 
 	 * The editor will be augmented to allow for custom painting
 	 */
-	public StepDisplayer(CompilationUnitEditor editor) {
+	public StepLineDisplayer(CompilationUnitEditor editor) {
 		this.editor = editor;
 		painter = getAnnotationPainterForEditor(editor);
 
