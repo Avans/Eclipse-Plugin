@@ -43,9 +43,8 @@ public class StepAnnotationPainter implements IDrawingStrategy,
 		
 		if (gc != null) {
 
-			textWidget.addLineBackgroundListener(stepLineAnnotation);
-			textWidget.redrawRange(lineStartOffset, lengthToNextLineStartOffset, true); // Draw background
-
+			//textWidget.addLineBackgroundListener(stepLineAnnotation);
+			//textWidget.redrawRange(lineStartOffset, lengthToNextLineStartOffset, true); // Draw background
 			int y = textWidget.getLocationAtOffset(lineStartOffset).y;
 
 			gc.setFont(new Font(gc.getDevice(), "Arial", 12, SWT.BOLD));
@@ -54,9 +53,10 @@ public class StepAnnotationPainter implements IDrawingStrategy,
 			gc.drawText(stepLineAnnotation.getText(),
 					stepLineAnnotation.getDrawOffset(), y);
 		} else {
-			textWidget.removeLineBackgroundListener(stepLineAnnotation);
-			textWidget.addLineBackgroundListener(backgroundClearer);
-			textWidget.redrawRange(lineStartOffset, lengthToNextLineStartOffset, true);
+			//textWidget.removeLineBackgroundListener(stepLineAnnotation);
+			//textWidget.addLineBackgroundListener(backgroundClearer);
+			//textWidget.redrawRange(lineStartOffset, lengthToNextLineStartOffset, true);
+			//textWidget.removeLineBackgroundListener(backgroundClearer);
 		}
 
 	}

@@ -15,6 +15,7 @@ import org.eclipse.jface.text.source.AnnotationPainter;
 import org.eclipse.jface.text.source.IAnnotationModel;
 import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.jface.text.source.SourceViewer;
+import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.ui.texteditor.AbstractDecoratedTextEditor;
 import org.eclipse.ui.texteditor.AbstractTextEditor;
@@ -84,20 +85,25 @@ public class StepDisplayer {
 		activeAnnotations.add(stepLineAnnotation);
 		
 		painter.paint(AnnotationPainter.INTERNAL);
-		editor.getViewer().getTextWidget().redraw();
+		
+		StyledText textWidget = editor.getViewer().getTextWidget();
+		textWidget.addLineBackgroundListener(stepLineAnnotation);
+		textWidget.redraw();
 	}
 
 	/**
 	 * Remove 
 	 */
 	public void removeAllStepLines() {
+		StyledText textWidget = editor.getViewer().getTextWidget();
 		for(StepLineAnnotation stepLineAnnotation : activeAnnotations) {
 			annotationModel.removeAnnotation(stepLineAnnotation);
+			textWidget.removeLineBackgroundListener(stepLineAnnotation);
 		}
 		activeAnnotations.clear();
 		
 		painter.paint(AnnotationPainter.INTERNAL);
-		editor.getViewer().getTextWidget().redraw();
+		textWidget.redraw();
 	}
 
 	/**
