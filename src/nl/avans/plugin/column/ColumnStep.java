@@ -34,8 +34,8 @@ public class ColumnStep {
 
 	public List<StepLine> stepLines = new ArrayList<StepLine>();
 
-	public void paint(GC gc, int linePixel, int lineHeight, State executionState) {
-		value.paint(gc, executionState, x, linePixel, width, lineHeight);
+	public void paint(GC gc, Value maximalValue, int linePixel, int lineHeight, State executionState) {
+		value.paint(gc, maximalValue, executionState, x, linePixel, width, lineHeight);
 	}
 
 	public boolean isHovering(int x_coordinate) {

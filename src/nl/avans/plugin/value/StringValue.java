@@ -12,7 +12,7 @@ public class StringValue extends Value {
 	}
 	
 	@Override
-	public void paint(GC gc, State executionState, int x, int y, int width,
+	public void paint(GC gc, Value maximalValue, State executionState, int x, int y, int width,
 			int height) {
 		paintText('"' + value + '"', gc, executionState, x, y, width, height);
 	}

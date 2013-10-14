@@ -13,8 +13,32 @@ public class IntValue extends Value {
 	}
 
 	@Override
-	public void paint(GC gc, State executionState, int x, int y, int width,
+	public void paint(GC gc, Value maximalValue, State executionState, int x, int y, int width,
 			int height) {
-		paintText(value+"", gc, executionState, x, y, width, height);
+		gc.setFont(FONT);
+		
+		if(gc.stringExtent(value+"").x <= width) {
+			paintText(value+"", gc, executionState, x, y, width, height);
+		} else {
+			if(maximalValue instanceof IntValue) {
+				int maximum = ((IntValue)maximalValue).value;
+				int barHeight = (int)(value / (double)maximum * height);
+				if(barHeight < 1)
+					barHeight = 1;
+				
+				gc.setBackground(executionState.color);
+				gc.fillRectangle(x, y + height - barHeight, width, barHeight);
+			} else {
+				paintDefault(gc, executionState, x, y, width > 2 ? width - 1 : width, height);
+			}
+		}
+	}
+	
+	@Override
+	public int compareTo(Value value) {
+		if(value instanceof IntValue) {
+			return this.value - ((IntValue)value).value;
+		}
+		return super.compareTo(value);
 	}
 }

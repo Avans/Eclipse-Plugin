@@ -9,6 +9,7 @@ import nl.avans.plugin.ui.stepline.StepLineDisplayer;
 import nl.avans.plugin.ui.stepline.StepLine;
 import nl.avans.plugin.value.BooleanValue;
 import nl.avans.plugin.value.IntValue;
+import nl.avans.plugin.value.Value;
 
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.internal.ui.javaeditor.CompilationUnitEditor;
@@ -53,6 +54,15 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 			gc.fillRectangle(0, linePixel, getWidth(), lineHeight);
 		}
 
+		Value maximalValue = null;
+
+		for (ColumnStep columnStep : columnSteps) {
+			if (columnStep.line == widgetLine
+					&& (maximalValue == null || columnStep.value.compareTo(maximalValue) > 0)) {
+				maximalValue = columnStep.value;
+			}
+		}
+		
 		for (ColumnStep columnStep : columnSteps) {
 			if (columnStep.line == widgetLine) {
 				State state = State.EXECUTED; // By default display as executed
@@ -71,14 +81,13 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 					state = State.CURRENT;
 				}
 
-				columnStep.paint(gc, linePixel, lineHeight, state);
+				columnStep.paint(gc, maximalValue, linePixel, lineHeight, state);
 			}
 		}
 	}
 
 	public AvansRulerColumn() {
-		setWidth(100);
-		
+		setWidth(150);
 
 		int index = 0;
 		ColumnStep step1 = new ColumnStep();
@@ -92,8 +101,7 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 		step1.value = new IntValue(0);
 		columnSteps.add(step1);
 
-		
-		int iteration = 3;
+		int iteration = 20;
 		int x = 0;
 		int WIDTH = getWidth() / (iteration + 1);
 		while (x <= iteration) {
@@ -132,7 +140,7 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 				list.add(new StepLine("Print \"" + x + "\"", 6, true));
 				print_step.stepLines = list;
 				columnSteps.add(print_step);
-				
+
 				ColumnStep increment_step = new ColumnStep();
 				increment_step.index = index++;
 				increment_step.line = 7;
@@ -140,7 +148,8 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 				increment_step.x = x * WIDTH;
 				increment_step.value = new IntValue(x + 1);
 				list = new ArrayList<StepLine>();
-				list.add(new StepLine("Zet variabele 'x' op " + (x+1), 7, true));
+				list.add(new StepLine("Zet variabele 'x' op " + (x + 1), 7,
+						true));
 				increment_step.stepLines = list;
 				columnSteps.add(increment_step);
 			}

@@ -13,7 +13,7 @@ public class BooleanValue extends Value {
 	}
 	
 	@Override
-	public void paint(GC gc, State executionState, int x, int y, int width,
+	public void paint(GC gc, Value maximalValue, State executionState, int x, int y, int width,
 			int height) {
 		String text = value ? "true" : "false";
 		
