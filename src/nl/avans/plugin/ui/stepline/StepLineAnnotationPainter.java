@@ -18,6 +18,8 @@ public class StepLineAnnotationPainter implements IDrawingStrategy {
 	static final Color BACKGROUND_COLOR = new Color(Display.getCurrent(), 255,
 			255, 150);
 	static final Color TEXT_COLOR = new Color(Display.getCurrent(), 150, 150, 150);
+	
+	static final Font FONT = new Font(null, "Arial", 12, SWT.NORMAL);
 
 	/**
 	 * Paints the explanation text in the editor. This method just paints the
@@ -33,7 +35,7 @@ public class StepLineAnnotationPainter implements IDrawingStrategy {
 					.getLine());
 			int y = textWidget.getLocationAtOffset(lineStartOffset).y;
 
-			gc.setFont(new Font(gc.getDevice(), "Arial", 12, SWT.NORMAL));
+			gc.setFont(FONT);
 			gc.setBackground(stepLineAnnotation.isPrimary() ? BACKGROUND_COLOR : textWidget.getBackground());
 			gc.setForeground(TEXT_COLOR);
 			gc.drawText(stepLineAnnotation.getText(),

@@ -7,6 +7,8 @@ import nl.avans.plugin.column.ColumnStep;
 import nl.avans.plugin.column.ColumnStep.State;
 import nl.avans.plugin.ui.stepline.StepLineDisplayer;
 import nl.avans.plugin.ui.stepline.StepLine;
+import nl.avans.plugin.value.BooleanValue;
+import nl.avans.plugin.value.IntValue;
 
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.internal.ui.javaeditor.CompilationUnitEditor;
@@ -54,19 +56,18 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 		for (ColumnStep columnStep : columnSteps) {
 			if (columnStep.line == widgetLine) {
 				State state = State.EXECUTED; // By default display as executed
-				
-				if(activeColumnStep != null) {
-					if(columnStep == activeColumnStep) {
+
+				if (activeColumnStep != null) {
+					if (columnStep == activeColumnStep) {
 						state = State.CURRENT;
-					} else if(columnStep.index < activeColumnStep.index) {
+					} else if (columnStep.index < activeColumnStep.index) {
 						state = State.EXECUTED;
 					} else {
 						state = State.NON_EXECUTED;
 					}
-					
-					
+
 				}
-				if(columnStep == activeColumnStep) {
+				if (columnStep == activeColumnStep) {
 					state = State.CURRENT;
 				}
 
@@ -76,33 +77,77 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 	}
 
 	public AvansRulerColumn() {
-		setWidth(60);
+		setWidth(100);
+		
 
+		int index = 0;
 		ColumnStep step1 = new ColumnStep();
-		step1.index = 0;
+		step1.index = index++;
 		step1.line = 3;
 		step1.x = 0;
 		step1.width = getWidth();
 		List<StepLine> list2 = new ArrayList<StepLine>();
 		list2.add(new StepLine("Zet variabele 'x' op 0", 3, true));
 		step1.stepLines = list2;
-		
-
-		ColumnStep step2 = new ColumnStep();
-		step2.index = 1;
-		step2.line = 5;
-		step2.x = 0;
-		step2.width = getWidth();
-		
-		List<StepLine> list = new ArrayList<StepLine>();
-		list.add(new StepLine("Omdat 0 < 5...", 5, true));
-		list.add(new StepLine("...doen we dit", 6, false));
-		list.add(new StepLine("...en dit", 7, false));
-		list.add(new StepLine("...en proberen we opnieuw", 8, false));
-		step2.stepLines = list;
-
+		step1.value = new IntValue(0);
 		columnSteps.add(step1);
-		columnSteps.add(step2);
+
+		
+		int iteration = 3;
+		int x = 0;
+		int WIDTH = getWidth() / (iteration + 1);
+		while (x <= iteration) {
+			ColumnStep condition_step = new ColumnStep();
+			condition_step.index = index++;
+			condition_step.line = 5;
+			condition_step.width = WIDTH;
+			condition_step.x = x * WIDTH;
+			condition_step.value = new BooleanValue(x == iteration ? false
+					: true);
+
+			List<StepLine> list = new ArrayList<StepLine>();
+			if (x == iteration) {
+				list.add(new StepLine("Omdat " + x + " < " + iteration
+						+ " niet waar is...", 5, true));
+				list.add(new StepLine("...stoppen we met loopen", 8, false));
+			} else {
+				list.add(new StepLine("Omdat " + x + " < " + iteration + "...",
+						5, true));
+				list.add(new StepLine("...doen we dit", 6, false));
+				list.add(new StepLine("...en dit", 7, false));
+				list.add(new StepLine("...en proberen we opnieuw", 8, false));
+			}
+			condition_step.stepLines = list;
+			columnSteps.add(condition_step);
+
+			if (x < iteration) {
+
+				ColumnStep print_step = new ColumnStep();
+				print_step.index = index++;
+				print_step.line = 6;
+				print_step.width = WIDTH;
+				print_step.x = x * WIDTH;
+				print_step.value = new nl.avans.plugin.value.StringValue(x + "");
+				list = new ArrayList<StepLine>();
+				list.add(new StepLine("Print \"" + x + "\"", 6, true));
+				print_step.stepLines = list;
+				columnSteps.add(print_step);
+				
+				ColumnStep increment_step = new ColumnStep();
+				increment_step.index = index++;
+				increment_step.line = 7;
+				increment_step.width = WIDTH;
+				increment_step.x = x * WIDTH;
+				increment_step.value = new IntValue(x + 1);
+				list = new ArrayList<StepLine>();
+				list.add(new StepLine("Zet variabele 'x' op " + (x+1), 7, true));
+				increment_step.stepLines = list;
+				columnSteps.add(increment_step);
+			}
+
+			x++;
+
+		}
 	}
 
 	@Override
@@ -176,12 +221,12 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 
 		setActiveColumnStep(columnStep);
 	}
-	
+
 	public void setActiveColumnStep(ColumnStep columnStep) {
 		if (columnStep != activeColumnStep) {
 			activeColumnStep = columnStep;
-			
-			if(activeColumnStep != null) {
+
+			if (activeColumnStep != null) {
 				stepLineDisplayer.showStepLines(activeColumnStep.stepLines);
 			} else {
 				stepLineDisplayer.removeAllStepLines();

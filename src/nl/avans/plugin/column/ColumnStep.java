@@ -7,10 +7,11 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.GC;
 
 import nl.avans.plugin.ui.stepline.StepLine;
+import nl.avans.plugin.value.Value;
 
 public class ColumnStep {
 	public enum State {
-		EXECUTED(new Color(null, 170, 170, 170)),
+		EXECUTED(new Color(null, 140, 140, 140)),
 		CURRENT(new Color(null, 250, 140, 140)),
 		NON_EXECUTED(new Color(null, 220, 220, 220));
 		
@@ -28,20 +29,16 @@ public class ColumnStep {
 	
 	// Position and size on the line
 	public int x, width;
+	
+	public Value value;
 
 	public List<StepLine> stepLines = new ArrayList<StepLine>();
 
 	public void paint(GC gc, int linePixel, int lineHeight, State executionState) {
-		gc.setBackground(executionState.color);
-		int margin = 2;
-		if(executionState == State.CURRENT)
-			margin = 0;
-		
-		gc.fillOval(margin, linePixel + margin, lineHeight - margin * 2,
-				lineHeight - margin * 2);
+		value.paint(gc, executionState, x, linePixel, width, lineHeight);
 	}
 
 	public boolean isHovering(int x_coordinate) {
-		return x < x_coordinate && x_coordinate < x + width;
+		return x <= x_coordinate && x_coordinate < x + width;
 	}
 }
