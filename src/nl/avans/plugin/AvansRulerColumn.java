@@ -3,6 +3,7 @@ package nl.avans.plugin;
 import java.util.ArrayList;
 import java.util.List;
 
+import nl.avans.plugin.column.ColumnStep;
 import nl.avans.plugin.ui.stepline.StepLineDisplayer;
 import nl.avans.plugin.ui.stepline.StepLine;
 
@@ -19,6 +20,7 @@ import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.events.MouseTrackListener;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -28,10 +30,13 @@ import org.eclipse.ui.texteditor.rulers.IContributedRulerColumn;
 import org.eclipse.ui.texteditor.rulers.RulerColumnDescriptor;
 
 public class AvansRulerColumn extends AbstractRulerColumn implements
-		IContributedRulerColumn, IDocumentListener, MouseMoveListener, MouseListener, MouseTrackListener {
+		IContributedRulerColumn, IDocumentListener, MouseMoveListener,
+		MouseListener, MouseTrackListener {
 
 	RulerColumnDescriptor descriptor;
 	ITextEditor editor;
+
+	List<ColumnStep> columnSteps = new ArrayList<ColumnStep>();
 
 	@Override
 	protected void paintLine(GC gc, int modelLine, int widgetLine,
@@ -39,14 +44,42 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 
 		super.paintLine(gc, modelLine, widgetLine, linePixel, lineHeight);
 
-		gc.setForeground(new org.eclipse.swt.graphics.Color(null, 0, 255, 0));
-		gc.drawRectangle(5, linePixel, 20, lineHeight - 1);
+		// Draw alternating background
+		if (widgetLine % 2 == 0) {
+			gc.setBackground(new Color(null, 240, 240, 255));
+			gc.fillRectangle(0, linePixel, getWidth(), lineHeight);
+		}
+
+		for (ColumnStep columnStep : columnSteps) {
+			if (columnStep.line == widgetLine) {
+				columnStep.paint(gc, linePixel, lineHeight,
+						ColumnStep.State.NON_EXECUTED);
+			}
+		}
+		if (widgetLine == 3 || widgetLine == 5) {
+
+		}
 	}
 
 	public AvansRulerColumn() {
-		setWidth(30);
+		setWidth(60);
+
+		ColumnStep step1 = new ColumnStep();
+		step1.index = 0;
+		step1.line = 3;
+		step1.x = 0;
+		step1.width = getWidth();
+
+		ColumnStep step2 = new ColumnStep();
+		step2.index = 1;
+		step2.line = 5;
+		step2.x = 0;
+		step2.width = getWidth();
+
+		columnSteps.add(step1);
+		columnSteps.add(step2);
 	}
-	
+
 	@Override
 	public Control createControl(CompositeRuler parentRuler,
 			Composite parentControl) {
@@ -55,8 +88,6 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 		control.addMouseTrackListener(this);
 		return control;
 	}
-	
-	
 
 	@Override
 	public RulerColumnDescriptor getDescriptor() {
@@ -67,7 +98,7 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 	public void setDescriptor(RulerColumnDescriptor descriptor) {
 		this.descriptor = descriptor;
 	}
-	
+
 	private StepLineDisplayer stepLineDisplayer;
 
 	@Override
@@ -114,26 +145,26 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 
 	@Override
 	public void mouseMove(MouseEvent e) {
-		//System.out.println(e.x + ", " + e.y);
-		
+		// System.out.println(e.x + ", " + e.y);
+
 	}
 
 	@Override
 	public void mouseDoubleClick(MouseEvent e) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void mouseDown(MouseEvent e) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void mouseUp(MouseEvent e) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
@@ -149,12 +180,11 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 	@Override
 	public void mouseExit(MouseEvent e) {
 		stepLineDisplayer.removeAllStepLines();
-		
+
 	}
 
 	@Override
 	public void mouseHover(MouseEvent e) {
-		
-		
+
 	}
 }
