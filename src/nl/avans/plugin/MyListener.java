@@ -1,9 +1,12 @@
 package nl.avans.plugin;
 
+import java.util.HashMap;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.debug.core.DebugEvent;
 import org.eclipse.debug.core.DebugException;
+import org.eclipse.debug.core.model.IValue;
 import org.eclipse.debug.core.model.IVariable;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
@@ -16,7 +19,6 @@ import org.eclipse.jdt.debug.core.IJavaStackFrame;
 import org.eclipse.jdt.debug.core.IJavaThread;
 import org.eclipse.jdt.debug.core.IJavaType;
 import org.eclipse.jdt.debug.core.IJavaValue;
-import org.eclipse.jdt.debug.eval.EvaluationManager;
 import org.eclipse.jdt.debug.eval.IAstEvaluationEngine;
 import org.eclipse.jdt.debug.eval.IEvaluationListener;
 import org.eclipse.jdt.debug.eval.IEvaluationResult;
@@ -27,7 +29,7 @@ import com.sun.jdi.ObjectReference;
 public class MyListener implements IJavaBreakpointListener {
 
 	IJavaProject myJavaProject;
-	
+
 	public MyListener(IJavaProject myJavaProject) {
 		this.myJavaProject = myJavaProject;
 	}
@@ -35,20 +37,20 @@ public class MyListener implements IJavaBreakpointListener {
 	@Override
 	public void addingBreakpoint(IJavaDebugTarget target,
 			IJavaBreakpoint breakpoint) {
-		System.out.println("Adding breakpoint");
+		// System.out.println("Adding breakpoint");
 	}
 
 	@Override
 	public int installingBreakpoint(IJavaDebugTarget target,
 			IJavaBreakpoint breakpoint, IJavaType type) {
-		System.out.println("Installing breakpoint");
+		// System.out.println("Installing breakpoint");
 		return INSTALL;
 	}
 
 	@Override
 	public void breakpointInstalled(IJavaDebugTarget target,
 			IJavaBreakpoint breakpoint) {
-		System.out.println("Installed breakpoint");
+		// System.out.println("Installed breakpoint");
 
 	}
 
@@ -102,9 +104,16 @@ public class MyListener implements IJavaBreakpointListener {
 		return message;
 	}
 
-	public IJavaValue evaluate(String stringValue,
-			final IJavaStackFrame stack) throws DebugException {
+	public IJavaValue evaluate(String stringValue, final IJavaStackFrame stack)
+			throws DebugException {
 		IAstEvaluationEngine engine = getASTEvaluationEngine(stack);
+
+		// Save variable values, to mitigate any side effects
+		HashMap<IVariable, IValue> originalVariableValues = new HashMap<IVariable, IValue>();
+		for (IVariable variable : stack.getVariables()) {
+			originalVariableValues.put(variable, variable.getValue());
+		}
+
 		final IEvaluationResult[] results = new IEvaluationResult[1];
 		IEvaluationListener listener = new IEvaluationListener() {
 			@Override
@@ -161,29 +170,39 @@ public class MyListener implements IJavaBreakpointListener {
 			System.err.print(msg);
 			// throw new Exception(msg);
 		}
+
+		for (IVariable variable : stack.getVariables()) {
+			if (originalVariableValues.containsKey(variable))
+				variable.setValue(originalVariableValues.get(variable));
+		}
+
 		return result.getValue();
 	}
 
 	@Override
 	public int breakpointHit(IJavaThread thread, IJavaBreakpoint breakpoint) {
+		System.out.println("Hit breakpoint " + breakpoint);
 		try {
+
 			IJavaStackFrame stack = (IJavaStackFrame) thread.getStackFrames()[0];
-			// thread.getStackFrames()[0].
-			System.out.println(" x + 5 " +  evaluate("x + 5", stack));
+
+			System.out.println("Evaluated: " + evaluate("x = x + 100", stack));
+
 			IVariable v = stack.getVariables()[1];
 			System.out.println(v.getName() + ":" + v.getValue());
+
 		} catch (DebugException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		System.out.println("Hit breakpoint");
+
 		return DONT_SUSPEND;
 	}
 
 	@Override
 	public void breakpointRemoved(IJavaDebugTarget target,
 			IJavaBreakpoint breakpoint) {
-		System.out.println("Removed breakpoint");
+		// System.out.println("Removed breakpoint");
 		// TODO Auto-generated method stub
 
 	}

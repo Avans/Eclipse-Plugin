@@ -24,6 +24,7 @@ import org.eclipse.jdt.debug.core.IJavaLineBreakpoint;
 import org.eclipse.jdt.debug.core.IJavaThread;
 import org.eclipse.jdt.debug.core.IJavaType;
 import org.eclipse.jdt.debug.core.JDIDebugModel;
+import org.eclipse.jdt.internal.launching.JavaSourceLookupDirector;
 import org.eclipse.jdt.internal.ui.javaeditor.CompilationUnitEditor;
 import org.eclipse.jdt.internal.ui.javaeditor.EditorUtility;
 import org.eclipse.jdt.launching.IVMInstall;
@@ -62,6 +63,7 @@ import org.eclipse.debug.core.model.IBreakpoint;
 import org.eclipse.debug.core.model.IDebugTarget;
 import org.eclipse.debug.core.model.IMemoryBlock;
 import org.eclipse.debug.core.model.IProcess;
+import org.eclipse.debug.core.model.ISourceLocator;
 import org.eclipse.debug.core.model.IThread;
 
 public class AvansRulerColumn extends AbstractRulerColumn implements
@@ -354,7 +356,12 @@ MouseListener, MouseTrackListener {
 					if (classPath != null) {
 						VMRunnerConfiguration vmConfig = 
 								new VMRunnerConfiguration("TienTeller", classPath);
-						ILaunch launch = new Launch(null, ILaunchManager.DEBUG_MODE, null);
+						
+						ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
+						JavaSourceLookupDirector sourceLocator = new JavaSourceLookupDirector();
+						sourceLocator.initializeDefaults(DebugPlugin.getDefault().getLaunchManager().getLaunchConfigurations()[0]);
+						
+						ILaunch launch = new Launch(null, ILaunchManager.DEBUG_MODE, sourceLocator);
 						
 						IType tienTeller = myJavaProject.findType("TienTeller");
 						IMethod main = tienTeller.getMethods()[0];
