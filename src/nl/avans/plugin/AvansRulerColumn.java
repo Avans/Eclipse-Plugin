@@ -11,9 +11,25 @@ import nl.avans.plugin.value.BooleanValue;
 import nl.avans.plugin.value.IntValue;
 import nl.avans.plugin.value.Value;
 
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IMethod;
+import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeRoot;
+import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.dom.Message;
+import org.eclipse.jdt.debug.core.IJavaBreakpoint;
+import org.eclipse.jdt.debug.core.IJavaBreakpointListener;
+import org.eclipse.jdt.debug.core.IJavaDebugTarget;
+import org.eclipse.jdt.debug.core.IJavaLineBreakpoint;
+import org.eclipse.jdt.debug.core.IJavaThread;
+import org.eclipse.jdt.debug.core.IJavaType;
+import org.eclipse.jdt.debug.core.JDIDebugModel;
 import org.eclipse.jdt.internal.ui.javaeditor.CompilationUnitEditor;
 import org.eclipse.jdt.internal.ui.javaeditor.EditorUtility;
+import org.eclipse.jdt.launching.IVMInstall;
+import org.eclipse.jdt.launching.IVMRunner;
+import org.eclipse.jdt.launching.JavaRuntime;
+import org.eclipse.jdt.launching.VMRunnerConfiguration;
 import org.eclipse.jface.text.DocumentEvent;
 import org.eclipse.jface.text.IDocumentListener;
 import org.eclipse.jface.text.source.AbstractRulerColumn;
@@ -32,10 +48,25 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.ui.texteditor.ITextEditor;
 import org.eclipse.ui.texteditor.rulers.IContributedRulerColumn;
 import org.eclipse.ui.texteditor.rulers.RulerColumnDescriptor;
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IWorkspace;
+import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.debug.core.DebugException;
+import org.eclipse.debug.core.DebugPlugin;
+import org.eclipse.debug.core.ILaunch;
+import org.eclipse.debug.core.ILaunchManager;
+import org.eclipse.debug.core.Launch;
+import org.eclipse.debug.core.model.IBreakpoint;
+import org.eclipse.debug.core.model.IDebugTarget;
+import org.eclipse.debug.core.model.IMemoryBlock;
+import org.eclipse.debug.core.model.IProcess;
+import org.eclipse.debug.core.model.IThread;
 
 public class AvansRulerColumn extends AbstractRulerColumn implements
-		IContributedRulerColumn, IDocumentListener, MouseMoveListener,
-		MouseListener, MouseTrackListener {
+IContributedRulerColumn, IDocumentListener, MouseMoveListener,
+MouseListener, MouseTrackListener {
 
 	RulerColumnDescriptor descriptor;
 	ITextEditor editor;
@@ -58,11 +89,12 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 
 		for (ColumnStep columnStep : columnSteps) {
 			if (columnStep.line == widgetLine
-					&& (maximalValue == null || columnStep.value.compareTo(maximalValue) > 0)) {
+					&& (maximalValue == null || columnStep.value
+					.compareTo(maximalValue) > 0)) {
 				maximalValue = columnStep.value;
 			}
 		}
-		
+
 		for (ColumnStep columnStep : columnSteps) {
 			if (columnStep.line == widgetLine) {
 				State state = State.EXECUTED; // By default display as executed
@@ -81,7 +113,8 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 					state = State.CURRENT;
 				}
 
-				columnStep.paint(gc, maximalValue, linePixel, lineHeight, state);
+				columnStep
+				.paint(gc, maximalValue, linePixel, lineHeight, state);
 			}
 		}
 	}
@@ -281,7 +314,66 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 	}
 
 	@Override
-	public void mouseEnter(MouseEvent e) {
+	public void mouseEnter(MouseEvent me) {
+
+		IJavaProject myJavaProject = null;
+		IProject myProject = null;
+
+		IWorkspace workspace = ResourcesPlugin.getWorkspace();
+		IWorkspaceRoot root = workspace.getRoot();
+		// Get all projects in the workspace
+		
+		IProject[] projects = root.getProjects();
+		// Loop over all projects
+		for (IProject project : projects) {
+			try {
+				// only work on open projects with the Java nature
+				if (project.isOpen()
+						& project.isNatureEnabled(JavaCore.NATURE_ID)) {
+					myProject = project;
+					myJavaProject = JavaCore.create(project);
+				}
+			} catch (CoreException e) {
+				e.printStackTrace();
+			}
+		}
+
+
+		IVMInstall vmInstall = null;
+		try {
+			vmInstall = JavaRuntime.getVMInstall(myJavaProject);
+			if (vmInstall == null)
+				vmInstall = JavaRuntime.getDefaultVMInstall();
+			if (vmInstall != null) {
+				IVMRunner vmRunner = vmInstall.getVMRunner(ILaunchManager.DEBUG_MODE);
+				if (vmRunner != null) {
+					String[] classPath = null;
+					try {
+						classPath = JavaRuntime.computeDefaultRuntimeClassPath(myJavaProject);
+					} catch (CoreException e) { }
+					if (classPath != null) {
+						VMRunnerConfiguration vmConfig = 
+								new VMRunnerConfiguration("TienTeller", classPath);
+						ILaunch launch = new Launch(null, ILaunchManager.DEBUG_MODE, null);
+						
+						IType tienTeller = myJavaProject.findType("TienTeller");
+						IMethod main = tienTeller.getMethods()[0];
+						String signature = main.getSignature();
+						
+						System.out.println(tienTeller + " " + main + " " + signature);
+						
+						//launch.
+						JDIDebugModel.addJavaBreakpointListener(new MyListener(myJavaProject));
+						//JDIDebugModel.createMethodEntryBreakpoint(myProject, "TienTeller", "main", signature, -1, -1, -1, -0, true, null);
+						vmRunner.run(vmConfig, launch, null);
+					}
+				}
+			}
+		} catch (CoreException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
 	}
 
 	@Override
