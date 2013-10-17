@@ -5,6 +5,7 @@ import java.util.List;
 
 import nl.avans.plugin.column.ColumnStep;
 import nl.avans.plugin.column.ColumnStep.State;
+import nl.avans.plugin.column.LoopStepContainer;
 import nl.avans.plugin.ui.stepline.StepLineDisplayer;
 import nl.avans.plugin.ui.stepline.StepLine;
 import nl.avans.plugin.value.BooleanValue;
@@ -49,6 +50,7 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.ui.texteditor.ITextEditor;
 import org.eclipse.ui.texteditor.rulers.IContributedRulerColumn;
 import org.eclipse.ui.texteditor.rulers.RulerColumnDescriptor;
+import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRoot;
@@ -136,7 +138,9 @@ MouseListener, MouseTrackListener {
 		step1.value = new IntValue(0);
 		columnSteps.add(step1);
 
-		int iteration = 20;
+		loop = new LoopStepContainer(5, 3, getWidth());
+		
+		int iteration = 5;
 		int x = 0;
 		int WIDTH = getWidth() / (iteration + 1);
 		while (x <= iteration) {
@@ -162,6 +166,7 @@ MouseListener, MouseTrackListener {
 			}
 			condition_step.stepLines = list;
 			columnSteps.add(condition_step);
+			loop.addColumnStep(condition_step);
 
 			if (x < iteration) {
 
@@ -175,6 +180,7 @@ MouseListener, MouseTrackListener {
 				list.add(new StepLine("Print \"" + x + "\"", 6, true));
 				print_step.stepLines = list;
 				columnSteps.add(print_step);
+				loop.addColumnStep(print_step);
 
 				ColumnStep increment_step = new ColumnStep();
 				increment_step.index = index++;
@@ -187,11 +193,13 @@ MouseListener, MouseTrackListener {
 						true));
 				increment_step.stepLines = list;
 				columnSteps.add(increment_step);
+				loop.addColumnStep(increment_step);
 			}
 
 			x++;
 
 		}
+		loop.layout();
 	}
 
 	@Override
@@ -258,6 +266,7 @@ MouseListener, MouseTrackListener {
 	}
 
 	private ColumnStep activeColumnStep;
+	private LoopStepContainer loop;
 
 	@Override
 	public void mouseMove(MouseEvent e) {
@@ -288,6 +297,10 @@ MouseListener, MouseTrackListener {
 		if (line == -1)
 			return null;
 
+		ColumnStep loopColumnStep = loop.getHoveringStep(line, x);
+		if(loopColumnStep != null)
+			return loopColumnStep;
+		
 		for (ColumnStep columnStep : columnSteps) {
 			if (columnStep.line == line && columnStep.isHovering(x)) {
 				return columnStep;
@@ -318,6 +331,8 @@ MouseListener, MouseTrackListener {
 	@Override
 	public void mouseEnter(MouseEvent me) {
 
+		if(true)
+			return;
 		IJavaProject myJavaProject = null;
 		IProject myProject = null;
 
@@ -370,7 +385,12 @@ MouseListener, MouseTrackListener {
 						System.out.println(tienTeller + " " + main + " " + signature);
 						
 						//launch.
+						
 						JDIDebugModel.addJavaBreakpointListener(new MyListener(myJavaProject));
+						int linenumber = 6;
+						JDIDebugModel.createLineBreakpoint(tienTeller.getResource(), tienTeller.getFullyQualifiedName(), linenumber, -1, -1, 0, true, null);
+						
+						
 						//JDIDebugModel.createMethodEntryBreakpoint(myProject, "TienTeller", "main", signature, -1, -1, -1, -0, true, null);
 						vmRunner.run(vmConfig, launch, null);
 					}
