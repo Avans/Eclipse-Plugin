@@ -23,10 +23,10 @@ public class ColumnStep {
 	
 	public int index;
 	
-	// The line that this step is on
+	// The line that this step is on (0-indexed)
 	public int line;
 	
-	// Position and size on the line
+	// Position and size on the line in the ruler
 	public int x, width;
 	
 	public Value value;
