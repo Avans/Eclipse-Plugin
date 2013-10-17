@@ -8,7 +8,7 @@ public class StepLine {
 	// The text to be displayed next to the line
 	private String explanation;
 	
-	// The line in the source code that is explained
+	// The line in the source code that is explained (0-indexed)
 	private int line;
 	
 	// Whether it the text is bold or not

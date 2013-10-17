@@ -1,11 +1,15 @@
 package nl.avans.plugin;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import nl.avans.plugin.column.ColumnStep;
 import nl.avans.plugin.column.ColumnStep.State;
 import nl.avans.plugin.column.LoopStepContainer;
+import nl.avans.plugin.model.ProgramExecution;
+import nl.avans.plugin.step.Step;
 import nl.avans.plugin.ui.stepline.StepLineDisplayer;
 import nl.avans.plugin.ui.stepline.StepLine;
 import nl.avans.plugin.value.BooleanValue;
@@ -17,7 +21,16 @@ import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.dom.AST;
+import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.ASTParser;
+import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.Message;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.Statement;
+import org.eclipse.jdt.core.dom.Type;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
+import org.eclipse.jdt.core.dom.WhileStatement;
 import org.eclipse.jdt.debug.core.IJavaBreakpoint;
 import org.eclipse.jdt.debug.core.IJavaBreakpointListener;
 import org.eclipse.jdt.debug.core.IJavaDebugTarget;
@@ -67,10 +80,11 @@ import org.eclipse.debug.core.model.IMemoryBlock;
 import org.eclipse.debug.core.model.IProcess;
 import org.eclipse.debug.core.model.ISourceLocator;
 import org.eclipse.debug.core.model.IThread;
+import org.eclipse.debug.internal.ui.sourcelookup.DownAction;
 
 public class AvansRulerColumn extends AbstractRulerColumn implements
-IContributedRulerColumn, IDocumentListener, MouseMoveListener,
-MouseListener, MouseTrackListener {
+		IContributedRulerColumn, IDocumentListener, MouseMoveListener,
+		MouseListener, MouseTrackListener {
 
 	RulerColumnDescriptor descriptor;
 	ITextEditor editor;
@@ -94,7 +108,7 @@ MouseListener, MouseTrackListener {
 		for (ColumnStep columnStep : columnSteps) {
 			if (columnStep.line == widgetLine
 					&& (maximalValue == null || columnStep.value
-					.compareTo(maximalValue) > 0)) {
+							.compareTo(maximalValue) > 0)) {
 				maximalValue = columnStep.value;
 			}
 		}
@@ -118,88 +132,95 @@ MouseListener, MouseTrackListener {
 				}
 
 				columnStep
-				.paint(gc, maximalValue, linePixel, lineHeight, state);
+						.paint(gc, maximalValue, linePixel, lineHeight, state);
 			}
 		}
 	}
 
 	public AvansRulerColumn() {
 		setWidth(150);
+	}
 
+	public Set<LoopStepContainer> loops = new HashSet<LoopStepContainer>();
+
+	public void displayProgramExecution(ProgramExecution programExecution) {
+		// Empty previous steps
+		loops = new HashSet<LoopStepContainer>();
+		columnSteps = new ArrayList<ColumnStep>();
+
+		// Create steps to be displayed in the ruler
 		int index = 0;
-		ColumnStep step1 = new ColumnStep();
-		step1.index = index++;
-		step1.line = 3;
-		step1.x = 0;
-		step1.width = getWidth();
-		List<StepLine> list2 = new ArrayList<StepLine>();
-		list2.add(new StepLine("Zet variabele 'x' op 0", 3, true));
-		step1.stepLines = list2;
-		step1.value = new IntValue(0);
-		columnSteps.add(step1);
-
-		loop = new LoopStepContainer(5, 3, getWidth());
-		
-		int iteration = 5;
-		int x = 0;
-		int WIDTH = getWidth() / (iteration + 1);
-		while (x <= iteration) {
-			ColumnStep condition_step = new ColumnStep();
-			condition_step.index = index++;
-			condition_step.line = 5;
-			condition_step.width = WIDTH;
-			condition_step.x = x * WIDTH;
-			condition_step.value = new BooleanValue(x == iteration ? false
-					: true);
-
-			List<StepLine> list = new ArrayList<StepLine>();
-			if (x == iteration) {
-				list.add(new StepLine("Omdat " + x + " < " + iteration
-						+ " niet waar is...", 5, true));
-				list.add(new StepLine("...stoppen we met loopen", 8, false));
-			} else {
-				list.add(new StepLine("Omdat " + x + " < " + iteration + "...",
-						5, true));
-				list.add(new StepLine("...doen we dit", 6, false));
-				list.add(new StepLine("...en dit", 7, false));
-				list.add(new StepLine("...en proberen we opnieuw", 8, false));
-			}
-			condition_step.stepLines = list;
-			columnSteps.add(condition_step);
-			loop.addColumnStep(condition_step);
-
-			if (x < iteration) {
-
-				ColumnStep print_step = new ColumnStep();
-				print_step.index = index++;
-				print_step.line = 6;
-				print_step.width = WIDTH;
-				print_step.x = x * WIDTH;
-				print_step.value = new nl.avans.plugin.value.StringValue(x + "");
-				list = new ArrayList<StepLine>();
-				list.add(new StepLine("Print \"" + x + "\"", 6, true));
-				print_step.stepLines = list;
-				columnSteps.add(print_step);
-				loop.addColumnStep(print_step);
-
-				ColumnStep increment_step = new ColumnStep();
-				increment_step.index = index++;
-				increment_step.line = 7;
-				increment_step.width = WIDTH;
-				increment_step.x = x * WIDTH;
-				increment_step.value = new IntValue(x + 1);
-				list = new ArrayList<StepLine>();
-				list.add(new StepLine("Zet variabele 'x' op " + (x + 1), 7,
-						true));
-				increment_step.stepLines = list;
-				columnSteps.add(increment_step);
-				loop.addColumnStep(increment_step);
-			}
-
-			x++;
-
+		for (Step step : programExecution.getSteps()) {
+			ColumnStep columnStep = new ColumnStep();
+			columnStep.line = step.line;
+			columnStep.index = index++;
+			columnStep.value = step.getValue();
+			columnStep.stepLines = step.getStepLines();
+			columnSteps.add(columnStep);
 		}
-		loop.layout();
+
+		// Find loops in the editor
+		createLoops();
+
+		layout();
+		redraw();
+	}
+
+	public void layout() {
+		for (ColumnStep columnStep : columnSteps) {
+			columnStep.x = 0;
+			columnStep.width = getWidth();
+		}
+		
+		for(LoopStepContainer loop : loops) {
+			loop.layout();
+		}
+
+	}
+
+	private void createLoops() {
+		loops = new HashSet<LoopStepContainer>();
+		
+		String source = getEditor().getDocumentProvider()
+				.getDocument(getEditor().getEditorInput()).get();
+		ASTParser parser = ASTParser.newParser(AST.JLS4);
+		parser.setKind(ASTParser.K_COMPILATION_UNIT);
+		parser.setSource(source.toCharArray()); // set source
+		parser.setResolveBindings(true); // we need bindings later on
+		CompilationUnit cu = (CompilationUnit) parser
+				.createAST(null /* IProgressMonitor */); // parse
+
+		// For all types in the file
+		for (Object objectType : cu.types()) {
+			TypeDeclaration type = (TypeDeclaration) objectType;
+
+			// For all methods in the type
+			for (MethodDeclaration method : type.getMethods()) {
+
+				// For all while-statements in the method
+				for (Object statementObject : method.getBody().statements()) {
+					Statement statement = (Statement) statementObject;
+					if (statement.getNodeType() == ASTNode.WHILE_STATEMENT) {
+
+						// Create a loop object
+						int startLine = cu.getLineNumber(statement
+								.getStartPosition()) - 1; // Subtract 1 to make 0-indexed
+						int endLine = cu.getLineNumber(statement
+								.getStartPosition() + statement.getLength()) - 1;
+						LoopStepContainer loopStepContainer = new LoopStepContainer(
+								startLine, endLine - startLine + 1, getWidth());
+						loops.add(loopStepContainer);
+					}
+				}
+			}
+		}
+
+		// Fill the containers with the appropriate steps
+		for (ColumnStep columnStep : columnSteps) {
+			for (LoopStepContainer loopStepContainer : loops) {
+				loopStepContainer.addIfAppropriate(columnStep);
+			}
+		}
 	}
 
 	@Override
@@ -229,6 +250,8 @@ MouseListener, MouseTrackListener {
 
 		stepLineDisplayer = new StepLineDisplayer(cueditor);
 		this.editor = editor;
+
+		displayProgramExecution(new ProgramExecution());
 	}
 
 	@Override
@@ -255,9 +278,9 @@ MouseListener, MouseTrackListener {
 	@Override
 	public void documentChanged(DocumentEvent event) {
 
-		ITypeRoot typeRoot = EditorUtility.getEditorInputJavaElement(
-				getEditor(), true);
-		System.out.println("Document changed" + typeRoot);
+		// ITypeRoot typeRoot = EditorUtility.getEditorInputJavaElement(
+		// getEditor(), true);
+		// System.out.println("Document changed" + typeRoot);
 		/*
 		 * if (typeRoot == null) { throw new
 		 * CoreException(getErrorStatus("Editor not showing a CU or class file",
@@ -266,7 +289,6 @@ MouseListener, MouseTrackListener {
 	}
 
 	private ColumnStep activeColumnStep;
-	private LoopStepContainer loop;
 
 	@Override
 	public void mouseMove(MouseEvent e) {
@@ -297,10 +319,13 @@ MouseListener, MouseTrackListener {
 		if (line == -1)
 			return null;
 
-		ColumnStep loopColumnStep = loop.getHoveringStep(line, x);
-		if(loopColumnStep != null)
-			return loopColumnStep;
+		for(LoopStepContainer loop : loops) {
+			ColumnStep loopColumnStep = loop.getHoveringStep(line, x);
+			if (loopColumnStep != null)
+				return loopColumnStep;	
+		}
 		
+
 		for (ColumnStep columnStep : columnSteps) {
 			if (columnStep.line == line && columnStep.isHovering(x)) {
 				return columnStep;
@@ -331,7 +356,7 @@ MouseListener, MouseTrackListener {
 	@Override
 	public void mouseEnter(MouseEvent me) {
 
-		if(true)
+		if (true)
 			return;
 		IJavaProject myJavaProject = null;
 		IProject myProject = null;
@@ -339,7 +364,7 @@ MouseListener, MouseTrackListener {
 		IWorkspace workspace = ResourcesPlugin.getWorkspace();
 		IWorkspaceRoot root = workspace.getRoot();
 		// Get all projects in the workspace
-		
+
 		IProject[] projects = root.getProjects();
 		// Loop over all projects
 		for (IProject project : projects) {
@@ -355,43 +380,55 @@ MouseListener, MouseTrackListener {
 			}
 		}
 
-
 		IVMInstall vmInstall = null;
 		try {
 			vmInstall = JavaRuntime.getVMInstall(myJavaProject);
 			if (vmInstall == null)
 				vmInstall = JavaRuntime.getDefaultVMInstall();
 			if (vmInstall != null) {
-				IVMRunner vmRunner = vmInstall.getVMRunner(ILaunchManager.DEBUG_MODE);
+				IVMRunner vmRunner = vmInstall
+						.getVMRunner(ILaunchManager.DEBUG_MODE);
 				if (vmRunner != null) {
 					String[] classPath = null;
 					try {
-						classPath = JavaRuntime.computeDefaultRuntimeClassPath(myJavaProject);
-					} catch (CoreException e) { }
+						classPath = JavaRuntime
+								.computeDefaultRuntimeClassPath(myJavaProject);
+					} catch (CoreException e) {
+					}
 					if (classPath != null) {
-						VMRunnerConfiguration vmConfig = 
-								new VMRunnerConfiguration("TienTeller", classPath);
-						
-						ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
+						VMRunnerConfiguration vmConfig = new VMRunnerConfiguration(
+								"TienTeller", classPath);
+
+						ILaunchManager manager = DebugPlugin.getDefault()
+								.getLaunchManager();
 						JavaSourceLookupDirector sourceLocator = new JavaSourceLookupDirector();
-						sourceLocator.initializeDefaults(DebugPlugin.getDefault().getLaunchManager().getLaunchConfigurations()[0]);
-						
-						ILaunch launch = new Launch(null, ILaunchManager.DEBUG_MODE, sourceLocator);
-						
+						sourceLocator.initializeDefaults(DebugPlugin
+								.getDefault().getLaunchManager()
+								.getLaunchConfigurations()[0]);
+
+						ILaunch launch = new Launch(null,
+								ILaunchManager.DEBUG_MODE, sourceLocator);
+
 						IType tienTeller = myJavaProject.findType("TienTeller");
 						IMethod main = tienTeller.getMethods()[0];
 						String signature = main.getSignature();
-						
-						System.out.println(tienTeller + " " + main + " " + signature);
-						
-						//launch.
-						
-						JDIDebugModel.addJavaBreakpointListener(new MyListener(myJavaProject));
+
+						System.out.println(tienTeller + " " + main + " "
+								+ signature);
+
+						// launch.
+
+						JDIDebugModel.addJavaBreakpointListener(new MyListener(
+								myJavaProject));
 						int linenumber = 6;
-						JDIDebugModel.createLineBreakpoint(tienTeller.getResource(), tienTeller.getFullyQualifiedName(), linenumber, -1, -1, 0, true, null);
-						
-						
-						//JDIDebugModel.createMethodEntryBreakpoint(myProject, "TienTeller", "main", signature, -1, -1, -1, -0, true, null);
+						JDIDebugModel.createLineBreakpoint(
+								tienTeller.getResource(),
+								tienTeller.getFullyQualifiedName(), linenumber,
+								-1, -1, 0, true, null);
+
+						// JDIDebugModel.createMethodEntryBreakpoint(myProject,
+						// "TienTeller", "main", signature, -1, -1, -1, -0,
+						// true, null);
 						vmRunner.run(vmConfig, launch, null);
 					}
 				}
@@ -400,7 +437,7 @@ MouseListener, MouseTrackListener {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-		
+
 	}
 
 	@Override

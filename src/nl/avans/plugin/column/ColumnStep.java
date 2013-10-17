@@ -22,7 +22,6 @@ public class ColumnStep {
 	}
 	
 	public int index;
-	public ColumnStep afterColumnStep;
 	
 	// The line that this step is on
 	public int line;

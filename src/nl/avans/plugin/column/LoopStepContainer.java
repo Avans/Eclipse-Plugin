@@ -44,6 +44,16 @@ public class LoopStepContainer {
 			return null;
 		
 		int index = x * columnSteps.size() / width;
+		if(index >= columnSteps.size())
+			return null;
+		
 		return columnSteps.get(index);
+	}
+
+	public void addIfAppropriate(ColumnStep columnStep) {
+		if(columnStep.line >= line && columnStep.line < line + linecount) {
+			addColumnStep(columnStep);
+		}
+		
 	}
 }
