@@ -11,46 +11,40 @@ import nl.avans.plugin.column.LoopingSegment;
 import nl.avans.plugin.model.ProgramExecution;
 import nl.avans.plugin.step.Step;
 import nl.avans.plugin.ui.stepline.StepLineDisplayer;
-import nl.avans.plugin.ui.stepline.StepLine;
-import nl.avans.plugin.value.BooleanValue;
-import nl.avans.plugin.value.IntValue;
 import nl.avans.plugin.value.Value;
 
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IWorkspace;
+import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.debug.core.DebugPlugin;
+import org.eclipse.debug.core.ILaunch;
+import org.eclipse.debug.core.ILaunchManager;
+import org.eclipse.debug.core.Launch;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
-import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.jdt.core.dom.Message;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.Statement;
-import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
-import org.eclipse.jdt.core.dom.WhileStatement;
-import org.eclipse.jdt.debug.core.IJavaBreakpoint;
-import org.eclipse.jdt.debug.core.IJavaBreakpointListener;
-import org.eclipse.jdt.debug.core.IJavaDebugTarget;
-import org.eclipse.jdt.debug.core.IJavaLineBreakpoint;
-import org.eclipse.jdt.debug.core.IJavaThread;
-import org.eclipse.jdt.debug.core.IJavaType;
 import org.eclipse.jdt.debug.core.JDIDebugModel;
 import org.eclipse.jdt.internal.launching.JavaSourceLookupDirector;
 import org.eclipse.jdt.internal.ui.javaeditor.CompilationUnitEditor;
-import org.eclipse.jdt.internal.ui.javaeditor.EditorUtility;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.IVMRunner;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.launching.VMRunnerConfiguration;
 import org.eclipse.jface.text.DocumentEvent;
+import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IDocumentListener;
 import org.eclipse.jface.text.source.AbstractRulerColumn;
 import org.eclipse.jface.text.source.CompositeRuler;
-import org.eclipse.jface.text.source.IVerticalRulerListener;
-import org.eclipse.jface.text.source.VerticalRulerEvent;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.MouseMoveListener;
@@ -59,32 +53,13 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Menu;
 import org.eclipse.ui.texteditor.ITextEditor;
 import org.eclipse.ui.texteditor.rulers.IContributedRulerColumn;
 import org.eclipse.ui.texteditor.rulers.RulerColumnDescriptor;
-import org.eclipse.core.resources.IMarker;
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IWorkspace;
-import org.eclipse.core.resources.IWorkspaceRoot;
-import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.debug.core.DebugException;
-import org.eclipse.debug.core.DebugPlugin;
-import org.eclipse.debug.core.ILaunch;
-import org.eclipse.debug.core.ILaunchManager;
-import org.eclipse.debug.core.Launch;
-import org.eclipse.debug.core.model.IBreakpoint;
-import org.eclipse.debug.core.model.IDebugTarget;
-import org.eclipse.debug.core.model.IMemoryBlock;
-import org.eclipse.debug.core.model.IProcess;
-import org.eclipse.debug.core.model.ISourceLocator;
-import org.eclipse.debug.core.model.IThread;
-import org.eclipse.debug.internal.ui.sourcelookup.DownAction;
 
 public class AvansRulerColumn extends AbstractRulerColumn implements
 		IContributedRulerColumn, MouseMoveListener, MouseListener,
-		MouseTrackListener {
+		MouseTrackListener, IDocumentListener {
 
 	// Mandatory fields
 	private RulerColumnDescriptor descriptor;
@@ -129,6 +104,10 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 	 * @param programExecution
 	 */
 	public void displayProgramExecution(ProgramExecution programExecution) {
+		if (programExecution == null && columnSteps.size() == 0
+				&& loops.size() == 0)
+			return;
+
 		// Empty previous steps
 		loops = new HashSet<LoopingSegment>();
 		columnSteps = new ArrayList<ColumnStep>();
@@ -304,6 +283,10 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 		stepLineDisplayer = new StepLineDisplayer(cueditor);
 
 		this.editor = editor;
+
+		IDocument document = editor.getDocumentProvider().getDocument(
+				editor.getEditorInput());
+		document.addDocumentListener(this);
 
 		// Temporary:
 		displayProgramExecution(new ProgramExecution());
@@ -510,5 +493,15 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 			e1.printStackTrace();
 		}
 
+	}
+
+	@Override
+	public void documentAboutToBeChanged(DocumentEvent event) {
+		// Not interesting
+	}
+
+	@Override
+	public void documentChanged(DocumentEvent event) {
+		displayProgramExecution(null);
 	}
 }

@@ -73,4 +73,12 @@
          </placement>
       </column>
    </extension>
+   
+   <extension
+         point="org.eclipse.jdt.core.compilationParticipant">
+      <compilationParticipant
+            class="nl.avans.plugin.AvansCompilationParticipant"
+            id="Eclipse-Plugin.compilationParticipant1">
+      </compilationParticipant>
+   </extension>
 </plugin>
