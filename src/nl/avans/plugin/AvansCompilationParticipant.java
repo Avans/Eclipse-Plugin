@@ -3,8 +3,8 @@ package nl.avans.plugin;
 import java.util.ArrayList;
 import java.util.List;
 
-import nl.avans.plugin.debug.BreakpointListener;
-import nl.avans.plugin.debug.BreakpointListener.TerminatorListener;
+import nl.avans.plugin.debug.JavaDebuggerListener;
+import nl.avans.plugin.debug.JavaDebuggerListener.TerminatorListener;
 import nl.avans.plugin.debug.ProgramExecutionManager;
 import nl.avans.plugin.debug.StepRecorderBreakpoint;
 import nl.avans.plugin.model.ProgramExecution;
@@ -39,7 +39,8 @@ import org.eclipse.jdt.launching.IVMRunner;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.launching.VMRunnerConfiguration;
 
-public class AvansCompilationParticipant extends CompilationParticipant implements TerminatorListener {
+public class AvansCompilationParticipant extends CompilationParticipant
+		implements TerminatorListener {
 
 	private ProgramExecution programExecution;
 
@@ -48,8 +49,6 @@ public class AvansCompilationParticipant extends CompilationParticipant implemen
 		return true;
 
 	}
-	
-	BreakpointListener listener;
 
 	@Override
 	public void buildFinished(IJavaProject project) {
@@ -74,11 +73,12 @@ public class AvansCompilationParticipant extends CompilationParticipant implemen
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		StepRecorderBreakpoint breakpoint = null;
 		ProgramExecution programExecution = new ProgramExecution();
 		try {
-			breakpoint = new StepRecorderBreakpoint(programExecution, project.findType("TienTeller"), 0, 0);
+			breakpoint = new StepRecorderBreakpoint(programExecution,
+					project.findType("TienTeller"), 0, 0);
 		} catch (DebugException e2) {
 			// TODO Auto-generated catch block
 			e2.printStackTrace();
@@ -86,27 +86,23 @@ public class AvansCompilationParticipant extends CompilationParticipant implemen
 			// TODO Auto-generated catch block
 			e2.printStackTrace();
 		}
+
 		
+		JavaDebuggerListener debuggerListener = JavaDebuggerListener.getDefault();
+		debuggerListener.setTerminatorListener(this);
 		
-		if(listener == null)
-			listener = new BreakpointListener(project, this);
-		IBreakpointManager breakpointManager = DebugPlugin.getDefault().getBreakpointManager();
-		
-		JDIDebugPlugin.getDefault().addJavaBreakpointListener(listener);
-		
-		
+		IBreakpointManager breakpointManager = DebugPlugin.getDefault()
+				.getBreakpointManager();
+
 		try {
 			breakpointManager.addBreakpoint(breakpoint);
 		} catch (CoreException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		
-		
-		
+
 		IVMInstall vmInstall = null;
-		
+
 		try {
 			vmInstall = JavaRuntime.getVMInstall(project);
 			if (vmInstall == null)
@@ -114,7 +110,7 @@ public class AvansCompilationParticipant extends CompilationParticipant implemen
 			if (vmInstall != null) {
 				IVMRunner vmRunner = vmInstall
 						.getVMRunner(ILaunchManager.DEBUG_MODE);
-				
+
 				if (vmRunner != null) {
 					String[] classPath = null;
 					try {
@@ -125,12 +121,11 @@ public class AvansCompilationParticipant extends CompilationParticipant implemen
 					if (classPath != null) {
 						VMRunnerConfiguration vmConfig = new VMRunnerConfiguration(
 								"TienTeller", classPath);
-						
 
 						ILaunchManager manager = DebugPlugin.getDefault()
 								.getLaunchManager();
-						DebugPlugin.getDefault().addDebugEventListener(listener);
 						
+
 						JavaSourceLookupDirector sourceLocator = new JavaSourceLookupDirector();
 						sourceLocator.initializeDefaults(DebugPlugin
 								.getDefault().getLaunchManager()
@@ -138,7 +133,6 @@ public class AvansCompilationParticipant extends CompilationParticipant implemen
 
 						ILaunch launch = new Launch(null,
 								ILaunchManager.DEBUG_MODE, sourceLocator);
-						
 
 						IType tienTeller = project.findType("TienTeller");
 						IMethod main = tienTeller.getMethods()[0];
@@ -159,10 +153,11 @@ public class AvansCompilationParticipant extends CompilationParticipant implemen
 
 	}
 
-	private void prepCompilationUnit(ICompilationUnit unit) throws JavaModelException {
+	private void prepCompilationUnit(ICompilationUnit unit)
+			throws JavaModelException {
 		// TODO Auto-generated method stub
 		System.out.println("Prepping" + unit);
-		
+
 		String source = unit.getSource();
 		ASTParser parser = ASTParser.newParser(AST.JLS4);
 		parser.setKind(ASTParser.K_COMPILATION_UNIT);
@@ -186,38 +181,40 @@ public class AvansCompilationParticipant extends CompilationParticipant implemen
 		}
 
 	}
-	
+
 	private void prepStatementList(List statementList) {
-		for(Object statementObject : statementList) {
-			Statement statement = (Statement)statementObject;
-			//Bla bla
+		for (Object statementObject : statementList) {
+			Statement statement = (Statement) statementObject;
+			// Bla bla
 		}
 	}
 
 	@Override
 	public void debugTerminated() {
 		System.out.println("Terminated!");
-		DebugPlugin.getDefault().removeDebugEventListener(listener);
 		try {
 			removeAllBreakpoints();
 		} catch (CoreException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		ProgramExecutionManager.getDefault().setProgramExecution(programExecution);
+		ProgramExecutionManager.getDefault().setProgramExecution(
+				programExecution);
 	}
 
 	private void removeAllBreakpoints() throws CoreException {
-		
+
 		ArrayList<StepRecorderBreakpoint> stepBreakpoints = new ArrayList<StepRecorderBreakpoint>();
-		
-		IBreakpointManager breakpointManager = DebugPlugin.getDefault().getBreakpointManager();
-		for(IBreakpoint breakpoint : breakpointManager.getBreakpoints()) {
-			if(breakpoint instanceof StepRecorderBreakpoint) {
+
+		IBreakpointManager breakpointManager = DebugPlugin.getDefault()
+				.getBreakpointManager();
+		for (IBreakpoint breakpoint : breakpointManager.getBreakpoints()) {
+			if (breakpoint instanceof StepRecorderBreakpoint) {
 				stepBreakpoints.add((StepRecorderBreakpoint) breakpoint);
 			}
 		}
-		breakpointManager.removeBreakpoints(stepBreakpoints.toArray(new StepRecorderBreakpoint[0]), true);
-		
+		breakpointManager.removeBreakpoints(
+				stepBreakpoints.toArray(new StepRecorderBreakpoint[0]), true);
+
 	}
 }

@@ -8,7 +8,7 @@ import java.util.Set;
 import nl.avans.plugin.column.ColumnStep;
 import nl.avans.plugin.column.ColumnStep.State;
 import nl.avans.plugin.column.LoopingSegment;
-import nl.avans.plugin.debug.BreakpointListener;
+import nl.avans.plugin.debug.JavaDebuggerListener;
 import nl.avans.plugin.debug.ProgramExecutionManager;
 import nl.avans.plugin.debug.ProgramExecutionManager.ProgramExecutionListener;
 import nl.avans.plugin.model.ProgramExecution;
