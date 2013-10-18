@@ -27,6 +27,7 @@ import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.CompilationParticipant;
 import org.eclipse.jdt.core.dom.AST;
+import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
@@ -52,53 +53,47 @@ public class AvansCompilationParticipant extends CompilationParticipant
 
 	@Override
 	public void buildFinished(IJavaProject project) {
+		try {
+			removeAllBreakpoints();
+		} catch (CoreException e2) {
+			// TODO Auto-generated catch block
+			e2.printStackTrace();
+		}
+		
 		programExecution = new ProgramExecution();
-		IPackageFragment[] packages;
-		try {
-			packages = project.getPackageFragments();
-
-			for (IPackageFragment mypackage : packages) {
-				if (mypackage.getKind() == IPackageFragmentRoot.K_SOURCE) {
-					System.out.println("Package " + mypackage.getElementName());
-					for (ICompilationUnit unit : mypackage
-							.getCompilationUnits()) {
-
-						prepCompilationUnit(unit);
-
-					}
-
-				}
-			}
-		} catch (JavaModelException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		StepRecorderBreakpoint breakpoint = null;
-		try {
-			breakpoint = new StepRecorderBreakpoint(programExecution,
-					project.findType("TienTeller"), 0, 0);
-		} catch (DebugException e2) {
-			// TODO Auto-generated catch block
-			e2.printStackTrace();
-		} catch (JavaModelException e2) {
-			// TODO Auto-generated catch block
-			e2.printStackTrace();
-		}
-
 		
-		JavaDebuggerListener debuggerListener = JavaDebuggerListener.getDefault();
+		List<StepRecorderBreakpoint> breakpoints = getBreakpointsForProject(project);
+		System.out.println("Breakpoints: " + breakpoints);
+		/*
+		 * StepRecorderBreakpoint breakpoint = null; try {
+		 * 
+		 * } catch (DebugException e2) { // TODO Auto-generated catch block
+		 * e2.printStackTrace(); } catch (JavaModelException e2) { // TODO
+		 * Auto-generated catch block e2.printStackTrace(); }
+		 */
+
+		JavaDebuggerListener debuggerListener = JavaDebuggerListener
+				.getDefault();
 		debuggerListener.setTerminatorListener(this);
-		
+		debuggerListener.setNeverSuspend(true);
+
 		IBreakpointManager breakpointManager = DebugPlugin.getDefault()
 				.getBreakpointManager();
-
 		try {
-			breakpointManager.addBreakpoint(breakpoint);
+			breakpointManager.addBreakpoints(breakpoints.toArray(new StepRecorderBreakpoint[0]));
+		} catch (CoreException e2) {
+			// TODO Auto-generated catch block
+			e2.printStackTrace();
+		}
+
+		/*
+		try {
+			//breakpointManager.addBreakpoint(breakpoint);
 		} catch (CoreException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		*/
 
 		IVMInstall vmInstall = null;
 
@@ -123,7 +118,6 @@ public class AvansCompilationParticipant extends CompilationParticipant
 
 						ILaunchManager manager = DebugPlugin.getDefault()
 								.getLaunchManager();
-						
 
 						JavaSourceLookupDirector sourceLocator = new JavaSourceLookupDirector();
 						sourceLocator.initializeDefaults(DebugPlugin
@@ -152,11 +146,33 @@ public class AvansCompilationParticipant extends CompilationParticipant
 
 	}
 
-	private void prepCompilationUnit(ICompilationUnit unit)
-			throws JavaModelException {
-		// TODO Auto-generated method stub
-		System.out.println("Prepping" + unit);
+	private List<StepRecorderBreakpoint> getBreakpointsForProject(
+			IJavaProject project) {
+		List<StepRecorderBreakpoint> breakpoints = new ArrayList<StepRecorderBreakpoint>();
+		IPackageFragment[] packages;
+		try {
+			packages = project.getPackageFragments();
 
+			for (IPackageFragment mypackage : packages) {
+				if (mypackage.getKind() == IPackageFragmentRoot.K_SOURCE) {
+					for (ICompilationUnit unit : mypackage
+							.getCompilationUnits()) {
+
+						List<StepRecorderBreakpoint> compilationUnitBreakpoints = getBreakpointsCompilationUnit(unit);
+						breakpoints.addAll(compilationUnitBreakpoints);
+					}
+
+				}
+			}
+		} catch (JavaModelException e) {
+			e.printStackTrace();
+		}
+		return breakpoints;
+	}
+
+	private List<StepRecorderBreakpoint> getBreakpointsCompilationUnit(
+			ICompilationUnit unit) throws JavaModelException {
+		List<StepRecorderBreakpoint> breakpoints = new ArrayList<StepRecorderBreakpoint>();
 		String source = unit.getSource();
 		ASTParser parser = ASTParser.newParser(AST.JLS4);
 		parser.setKind(ASTParser.K_COMPILATION_UNIT);
@@ -172,25 +188,47 @@ public class AvansCompilationParticipant extends CompilationParticipant
 			// For all methods in the type
 			for (MethodDeclaration method : type.getMethods()) {
 
-				// For all while-statements in the method
-				for (Object statementObject : method.getBody().statements()) {
-					System.out.println("Statement: " + statementObject);
-				}
+				List<StepRecorderBreakpoint> statementBreakpoints = getBreakpointsForStatements(
+						method.getBody().statements(), unit.getTypes()[0]);
+
+				breakpoints.addAll(statementBreakpoints);
 			}
 		}
-
+		return breakpoints;
 	}
 
-	private void prepStatementList(List statementList) {
-		for (Object statementObject : statementList) {
+	private List<StepRecorderBreakpoint> getBreakpointsForStatements(List statements, IType type) {
+		List<StepRecorderBreakpoint> breakpoints = new ArrayList<StepRecorderBreakpoint>();
+		// For all while-statements in the method
+		for (Object statementObject : statements) {
+
 			Statement statement = (Statement) statementObject;
-			// Bla bla
+			if (statement.getNodeType() == ASTNode.WHILE_STATEMENT) {
+				System.out.println("While Statement: " + statement);
+				try {
+					StepRecorderBreakpoint breakpoint = new StepRecorderBreakpoint(programExecution, type, statement.getStartPosition(), statement.getStartPosition() + statement.getLength());
+					breakpoints.add(breakpoint);
+				} catch (DebugException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (JavaModelException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (CoreException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+			}
+
 		}
+		return breakpoints;
 	}
 
 	@Override
 	public void debugTerminated() {
 		System.out.println("Terminated!");
+		JavaDebuggerListener.getDefault().setNeverSuspend(false);
 		try {
 			removeAllBreakpoints();
 		} catch (CoreException e) {

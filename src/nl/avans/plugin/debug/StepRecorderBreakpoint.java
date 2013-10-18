@@ -16,6 +16,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.model.IVariable;
 import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.debug.core.IJavaStackFrame;
 import org.eclipse.jdt.debug.core.IJavaThread;
 import org.eclipse.jdt.internal.debug.core.breakpoints.JavaLineBreakpoint;
@@ -25,25 +26,39 @@ public class StepRecorderBreakpoint extends JavaLineBreakpoint {
 	private ProgramExecution programExecution;
 
 	public StepRecorderBreakpoint(ProgramExecution programExecution,
-			IType type, int charStart, int charEnd) throws DebugException {
-		super(type.getResource(), type.getFullyQualifiedName(), 6, -1, -1, -1,
+			IType type, int charStart, int charEnd) throws CoreException {
+		super(type.getResource(), type.getFullyQualifiedName(),
+				getLineForPosition(type, charStart), charStart, charEnd, -1,
 				false, new HashMap<String, Object>());
+
 		this.programExecution = programExecution;
+
+		/**
+		 * For pete's sake, do not persist this breakpoint. It is meant as a
+		 * super-temporary breakpoint and should be removed at the first
+		 * possible instance.
+		 */
+		setPersisted(false);
 	}
 
-	@Override
-	public int getLineNumber() throws CoreException {
-		return 6;
+	private static int getLineForPosition(IType type, int charStart)
+			throws JavaModelException {
+		// Calculate 1-indexed line from charStart and charEnd
+		String source = type.getCompilationUnit().getSource();
+		int line = source.substring(0, charStart).split("\n").length;
+		System.out.println("Line number: " + line);
+
+		return line;
 	}
 
-	/**
-	 * For pete's sake, do not persist this breakpoint It is meant as a
-	 * super-temporary breakpoint and should be removed at the first possible
-	 * instance.
-	 */
-	@Override
-	public boolean isPersisted() throws CoreException {
-		return false;
+	private int getZeroIndexedLineNumber() {
+		try {
+			return getLineNumber() - 1;
+		} catch (CoreException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return 0;
+		}
 	}
 
 	public void record(IJavaThread thread) {
@@ -51,10 +66,11 @@ public class StepRecorderBreakpoint extends JavaLineBreakpoint {
 			IJavaStackFrame stack = (IJavaStackFrame) thread.getStackFrames()[0];
 
 			Step step = new Step();
-			step.line = 5;
+			step.line = getZeroIndexedLineNumber();
 			step.value = new BooleanValue(true);
 			List<StepLine> stepLines = new ArrayList<StepLine>();
-			stepLines.add(new StepLine("Omdat dit waar is...", 5, true));
+			stepLines.add(new StepLine("Omdat dit waar is...",
+					getZeroIndexedLineNumber(), true));
 			step.stepLines = stepLines;
 			programExecution.addStep(step);
 

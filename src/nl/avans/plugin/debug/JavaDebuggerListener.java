@@ -73,6 +73,7 @@ public class JavaDebuggerListener implements IJavaBreakpointListener,
 	}
 
 	TerminatorListener listener;
+	private boolean neverSuspend = false;
 
 	public void setTerminatorListener(TerminatorListener listener) {
 		this.listener = listener;
@@ -104,7 +105,16 @@ public class JavaDebuggerListener implements IJavaBreakpointListener,
 			stepBreakpoint.record(thread);
 		}
 
-		return DONT_SUSPEND;
+		return neverSuspend ? DONT_SUSPEND : DONT_CARE;
+	}
+
+	/**
+	 * Set whether to never suspend during debugging. This is used to ignore
+	 * normal breakpoints set by the user. Obviously these breakpoints should
+	 * work normally when we aren't doing our special debug run.
+	 */
+	public void setNeverSuspend(boolean neverSuspend) {
+		this.neverSuspend = neverSuspend;
 	}
 
 	/**
