@@ -1,9 +1,15 @@
 package nl.avans.plugin.debug;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 
 import nl.avans.plugin.model.ProgramExecution;
+import nl.avans.plugin.step.Step;
+import nl.avans.plugin.ui.stepline.StepLine;
+import nl.avans.plugin.value.BooleanValue;
+import nl.avans.plugin.value.IntValue;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
@@ -20,13 +26,9 @@ public class StepRecorderBreakpoint extends JavaLineBreakpoint {
 
 	public StepRecorderBreakpoint(ProgramExecution programExecution,
 			IType type, int charStart, int charEnd) throws DebugException {
-		/*
-		 * (IResource resource, String typeName, int lineNumber, int charStart,
-		 * int charEnd, int hitCount, boolean add, Map<String, Object>
-		 * attributes)
-		 */
 		super(type.getResource(), type.getFullyQualifiedName(), 6, -1, -1, -1,
 				false, new HashMap<String, Object>());
+		this.programExecution = programExecution;
 	}
 
 	@Override
@@ -45,14 +47,18 @@ public class StepRecorderBreakpoint extends JavaLineBreakpoint {
 	}
 
 	public void record(IJavaThread thread) {
-		IJavaStackFrame stack;
 		try {
-			stack = (IJavaStackFrame) thread.getStackFrames()[0];
+			IJavaStackFrame stack = (IJavaStackFrame) thread.getStackFrames()[0];
 
-			IVariable v = stack.getVariables()[1];
-			System.out.println(v.getName() + ":" + v.getValue());
+			Step step = new Step();
+			step.line = 5;
+			step.value = new BooleanValue(true);
+			List<StepLine> stepLines = new ArrayList<StepLine>();
+			stepLines.add(new StepLine("Omdat dit waar is...", 5, true));
+			step.stepLines = stepLines;
+			programExecution.addStep(step);
+
 		} catch (DebugException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 

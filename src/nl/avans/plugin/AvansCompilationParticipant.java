@@ -75,7 +75,6 @@ public class AvansCompilationParticipant extends CompilationParticipant
 		}
 
 		StepRecorderBreakpoint breakpoint = null;
-		ProgramExecution programExecution = new ProgramExecution();
 		try {
 			breakpoint = new StepRecorderBreakpoint(programExecution,
 					project.findType("TienTeller"), 0, 0);
