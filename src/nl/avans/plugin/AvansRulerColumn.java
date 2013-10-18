@@ -314,9 +314,6 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 		IDocument document = editor.getDocumentProvider().getDocument(
 				editor.getEditorInput());
 		document.addDocumentListener(this);
-
-		// Temporary:
-		displayProgramExecution(new ProgramExecution());
 	}
 
 	@Override
@@ -439,89 +436,7 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 
 	@Override
 	public void mouseEnter(MouseEvent me) {
-
-		if (true)
-			return;
-		IJavaProject myJavaProject = null;
-		IProject myProject = null;
-
-		IWorkspace workspace = ResourcesPlugin.getWorkspace();
-		IWorkspaceRoot root = workspace.getRoot();
-		// Get all projects in the workspace
-
-		IProject[] projects = root.getProjects();
-		// Loop over all projects
-		for (IProject project : projects) {
-			try {
-				// only work on open projects with the Java nature
-				if (project.isOpen()
-						& project.isNatureEnabled(JavaCore.NATURE_ID)) {
-					myProject = project;
-					myJavaProject = JavaCore.create(project);
-				}
-			} catch (CoreException e) {
-				e.printStackTrace();
-			}
-		}
-
-		IVMInstall vmInstall = null;
-		try {
-			vmInstall = JavaRuntime.getVMInstall(myJavaProject);
-			if (vmInstall == null)
-				vmInstall = JavaRuntime.getDefaultVMInstall();
-			if (vmInstall != null) {
-				IVMRunner vmRunner = vmInstall
-						.getVMRunner(ILaunchManager.DEBUG_MODE);
-				if (vmRunner != null) {
-					String[] classPath = null;
-					try {
-						classPath = JavaRuntime
-								.computeDefaultRuntimeClassPath(myJavaProject);
-					} catch (CoreException e) {
-					}
-					if (classPath != null) {
-						VMRunnerConfiguration vmConfig = new VMRunnerConfiguration(
-								"TienTeller", classPath);
-
-						ILaunchManager manager = DebugPlugin.getDefault()
-								.getLaunchManager();
-						JavaSourceLookupDirector sourceLocator = new JavaSourceLookupDirector();
-						sourceLocator.initializeDefaults(DebugPlugin
-								.getDefault().getLaunchManager()
-								.getLaunchConfigurations()[0]);
-
-						ILaunch launch = new Launch(null,
-								ILaunchManager.DEBUG_MODE, sourceLocator);
-
-						IType tienTeller = myJavaProject.findType("TienTeller");
-						IMethod main = tienTeller.getMethods()[0];
-						String signature = main.getSignature();
-
-						System.out.println(tienTeller + " " + main + " "
-								+ signature);
-
-						// launch.
-
-						JDIDebugModel.addJavaBreakpointListener(new BreakpointListener(
-								myJavaProject));
-						int linenumber = 6;
-						JDIDebugModel.createLineBreakpoint(
-								tienTeller.getResource(),
-								tienTeller.getFullyQualifiedName(), linenumber,
-								-1, -1, 0, true, null);
-
-						// JDIDebugModel.createMethodEntryBreakpoint(myProject,
-						// "TienTeller", "main", signature, -1, -1, -1, -0,
-						// true, null);
-						vmRunner.run(vmConfig, launch, null);
-					}
-				}
-			}
-		} catch (CoreException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-
+		// Not interesting
 	}
 
 	@Override
@@ -531,6 +446,6 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 
 	@Override
 	public void documentChanged(DocumentEvent event) {
-		displayProgramExecution(null);
+		ProgramExecutionManager.getDefault().removeProgramExecution();
 	}
 }

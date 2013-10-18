@@ -8,6 +8,9 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.debug.core.DebugEvent;
 import org.eclipse.debug.core.DebugException;
+import org.eclipse.debug.core.DebugPlugin;
+import org.eclipse.debug.core.IDebugEventSetListener;
+import org.eclipse.debug.core.model.IDebugTarget;
 import org.eclipse.debug.core.model.IValue;
 import org.eclipse.debug.core.model.IVariable;
 import org.eclipse.jdt.core.IJavaElement;
@@ -24,16 +27,23 @@ import org.eclipse.jdt.debug.core.IJavaValue;
 import org.eclipse.jdt.debug.eval.IAstEvaluationEngine;
 import org.eclipse.jdt.debug.eval.IEvaluationListener;
 import org.eclipse.jdt.debug.eval.IEvaluationResult;
+import org.eclipse.jdt.internal.debug.core.model.JDIDebugTarget;
 
 import com.sun.jdi.InvocationException;
 import com.sun.jdi.ObjectReference;
 
-public class BreakpointListener implements IJavaBreakpointListener {
+public class BreakpointListener implements IJavaBreakpointListener, IDebugEventSetListener {
 
+	public interface TerminatorListener {
+		public void debugTerminated();
+	}
+	
 	IJavaProject myJavaProject;
+	TerminatorListener listener;
 
-	public BreakpointListener(IJavaProject myJavaProject) {
+	public BreakpointListener(IJavaProject myJavaProject, TerminatorListener listener) {
 		this.myJavaProject = myJavaProject;
+		this.listener = listener;
 	}
 
 	@Override
@@ -185,12 +195,12 @@ public class BreakpointListener implements IJavaBreakpointListener {
 
 	@Override
 	public int breakpointHit(IJavaThread thread, IJavaBreakpoint breakpoint) {
-		System.out.println("Hit breakpoint " + breakpoint);
+		System.out.println("Hit breakpoint " + breakpoint + " " + this);
 		try {
 
 			IJavaStackFrame stack = (IJavaStackFrame) thread.getStackFrames()[0];
 
-			System.out.println("Evaluated: " + evaluate("x = x + 100", stack));
+			//System.out.println("Evaluated: " + evaluate("x = x + 100", stack));
 
 			IVariable v = stack.getVariables()[1];
 			System.out.println(v.getName() + ":" + v.getValue());
@@ -225,4 +235,14 @@ public class BreakpointListener implements IJavaBreakpointListener {
 
 	}
 
+	@Override
+	public void handleDebugEvents(DebugEvent[] events) {
+		for(DebugEvent event : events) {
+			if(event.getKind() == DebugEvent.TERMINATE && event.getSource() instanceof IDebugTarget) {
+				System.out.println("Removing: " + this);
+				DebugPlugin.getDefault().removeDebugEventListener(this);
+				listener.debugTerminated();
+			}
+		}
+	}
 }

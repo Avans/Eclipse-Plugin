@@ -1,22 +1,22 @@
 package nl.avans.plugin;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import nl.avans.plugin.debug.BreakpointListener;
+import nl.avans.plugin.debug.BreakpointListener.TerminatorListener;
 import nl.avans.plugin.debug.ProgramExecutionManager;
 import nl.avans.plugin.debug.StepRecorderBreakpoint;
 import nl.avans.plugin.model.ProgramExecution;
 
-import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.Platform;
-import org.eclipse.core.runtime.Plugin;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.IBreakpointManager;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.core.Launch;
+import org.eclipse.debug.core.model.IBreakpoint;
 import org.eclipse.debug.internal.core.BreakpointManager;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
@@ -32,26 +32,28 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
-import org.eclipse.jdt.debug.core.JDIDebugModel;
 import org.eclipse.jdt.internal.debug.core.JDIDebugPlugin;
 import org.eclipse.jdt.internal.launching.JavaSourceLookupDirector;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.IVMRunner;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.launching.VMRunnerConfiguration;
-import org.eclipse.swt.graphics.Resource;
 
-public class AvansCompilationParticipant extends CompilationParticipant {
+public class AvansCompilationParticipant extends CompilationParticipant implements TerminatorListener {
+
+	private ProgramExecution programExecution;
 
 	@Override
 	public boolean isActive(IJavaProject project) {
 		return true;
 
 	}
+	
+	BreakpointListener listener;
 
 	@Override
 	public void buildFinished(IJavaProject project) {
-
+		programExecution = new ProgramExecution();
 		IPackageFragment[] packages;
 		try {
 			packages = project.getPackageFragments();
@@ -86,9 +88,11 @@ public class AvansCompilationParticipant extends CompilationParticipant {
 		}
 		
 		
-		
+		if(listener == null)
+			listener = new BreakpointListener(project, this);
 		IBreakpointManager breakpointManager = DebugPlugin.getDefault().getBreakpointManager();
-		JDIDebugPlugin.getDefault().addJavaBreakpointListener(new BreakpointListener(project));
+		
+		JDIDebugPlugin.getDefault().addJavaBreakpointListener(listener);
 		
 		
 		try {
@@ -102,6 +106,7 @@ public class AvansCompilationParticipant extends CompilationParticipant {
 		
 		
 		IVMInstall vmInstall = null;
+		
 		try {
 			vmInstall = JavaRuntime.getVMInstall(project);
 			if (vmInstall == null)
@@ -109,6 +114,7 @@ public class AvansCompilationParticipant extends CompilationParticipant {
 			if (vmInstall != null) {
 				IVMRunner vmRunner = vmInstall
 						.getVMRunner(ILaunchManager.DEBUG_MODE);
+				
 				if (vmRunner != null) {
 					String[] classPath = null;
 					try {
@@ -119,9 +125,12 @@ public class AvansCompilationParticipant extends CompilationParticipant {
 					if (classPath != null) {
 						VMRunnerConfiguration vmConfig = new VMRunnerConfiguration(
 								"TienTeller", classPath);
+						
 
 						ILaunchManager manager = DebugPlugin.getDefault()
 								.getLaunchManager();
+						DebugPlugin.getDefault().addDebugEventListener(listener);
+						
 						JavaSourceLookupDirector sourceLocator = new JavaSourceLookupDirector();
 						sourceLocator.initializeDefaults(DebugPlugin
 								.getDefault().getLaunchManager()
@@ -129,6 +138,7 @@ public class AvansCompilationParticipant extends CompilationParticipant {
 
 						ILaunch launch = new Launch(null,
 								ILaunchManager.DEBUG_MODE, sourceLocator);
+						
 
 						IType tienTeller = project.findType("TienTeller");
 						IMethod main = tienTeller.getMethods()[0];
@@ -137,14 +147,8 @@ public class AvansCompilationParticipant extends CompilationParticipant {
 						System.out.println(tienTeller + " " + main + " "
 								+ signature);
 
-						// launch.
-
-						// JDIDebugModel.createMethodEntryBreakpoint(myProject,
-						// "TienTeller", "main", signature, -1, -1, -1, -0,
-						// true, null);
+						System.out.println("3 2 1 launch!");
 						vmRunner.run(vmConfig, launch, null);
-						System.out.println("Finished!");
-						ProgramExecutionManager.getDefault().setProgramExecution(programExecution);
 					}
 				}
 			}
@@ -188,5 +192,32 @@ public class AvansCompilationParticipant extends CompilationParticipant {
 			Statement statement = (Statement)statementObject;
 			//Bla bla
 		}
+	}
+
+	@Override
+	public void debugTerminated() {
+		System.out.println("Terminated!");
+		DebugPlugin.getDefault().removeDebugEventListener(listener);
+		try {
+			removeAllBreakpoints();
+		} catch (CoreException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		ProgramExecutionManager.getDefault().setProgramExecution(programExecution);
+	}
+
+	private void removeAllBreakpoints() throws CoreException {
+		
+		ArrayList<StepRecorderBreakpoint> stepBreakpoints = new ArrayList<StepRecorderBreakpoint>();
+		
+		IBreakpointManager breakpointManager = DebugPlugin.getDefault().getBreakpointManager();
+		for(IBreakpoint breakpoint : breakpointManager.getBreakpoints()) {
+			if(breakpoint instanceof StepRecorderBreakpoint) {
+				stepBreakpoints.add((StepRecorderBreakpoint) breakpoint);
+			}
+		}
+		breakpointManager.removeBreakpoints(stepBreakpoints.toArray(new StepRecorderBreakpoint[0]), true);
+		
 	}
 }

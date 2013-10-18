@@ -12,6 +12,7 @@ import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.internal.debug.core.breakpoints.JavaLineBreakpoint;
 
 public class StepRecorderBreakpoint extends JavaLineBreakpoint {
+	
 	private ProgramExecution programExecution;
 
 	public StepRecorderBreakpoint(ProgramExecution programExecution, IType type, int charStart, int charEnd) throws DebugException {
