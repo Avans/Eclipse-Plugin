@@ -26,31 +26,31 @@ import org.eclipse.jdt.debug.eval.IEvaluationResult;
 import com.sun.jdi.InvocationException;
 import com.sun.jdi.ObjectReference;
 
-public class MyListener implements IJavaBreakpointListener {
+public class BreakpointListener implements IJavaBreakpointListener {
 
 	IJavaProject myJavaProject;
 
-	public MyListener(IJavaProject myJavaProject) {
+	public BreakpointListener(IJavaProject myJavaProject) {
 		this.myJavaProject = myJavaProject;
 	}
 
 	@Override
 	public void addingBreakpoint(IJavaDebugTarget target,
 			IJavaBreakpoint breakpoint) {
-		// System.out.println("Adding breakpoint");
+		System.out.println("Adding breakpoint");
 	}
 
 	@Override
 	public int installingBreakpoint(IJavaDebugTarget target,
 			IJavaBreakpoint breakpoint, IJavaType type) {
-		// System.out.println("Installing breakpoint");
+		System.out.println("Installing breakpoint");
 		return INSTALL;
 	}
 
 	@Override
 	public void breakpointInstalled(IJavaDebugTarget target,
 			IJavaBreakpoint breakpoint) {
-		// System.out.println("Installed breakpoint");
+		System.out.println("Installed breakpoint");
 
 	}
 

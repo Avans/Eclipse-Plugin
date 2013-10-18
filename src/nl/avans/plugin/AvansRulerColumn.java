@@ -473,7 +473,7 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 
 						// launch.
 
-						JDIDebugModel.addJavaBreakpointListener(new MyListener(
+						JDIDebugModel.addJavaBreakpointListener(new BreakpointListener(
 								myJavaProject));
 						int linenumber = 6;
 						JDIDebugModel.createLineBreakpoint(
