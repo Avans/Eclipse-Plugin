@@ -8,6 +8,9 @@ import java.util.Set;
 import nl.avans.plugin.column.ColumnStep;
 import nl.avans.plugin.column.ColumnStep.State;
 import nl.avans.plugin.column.LoopingSegment;
+import nl.avans.plugin.debug.BreakpointListener;
+import nl.avans.plugin.debug.ProgramExecutionManager;
+import nl.avans.plugin.debug.ProgramExecutionManager.ProgramExecutionListener;
 import nl.avans.plugin.model.ProgramExecution;
 import nl.avans.plugin.step.Step;
 import nl.avans.plugin.ui.stepline.StepLineDisplayer;
@@ -53,13 +56,14 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.texteditor.ITextEditor;
 import org.eclipse.ui.texteditor.rulers.IContributedRulerColumn;
 import org.eclipse.ui.texteditor.rulers.RulerColumnDescriptor;
 
 public class AvansRulerColumn extends AbstractRulerColumn implements
 		IContributedRulerColumn, MouseMoveListener, MouseListener,
-		MouseTrackListener, IDocumentListener {
+		MouseTrackListener, IDocumentListener, ProgramExecutionListener {
 
 	// Mandatory fields
 	private RulerColumnDescriptor descriptor;
@@ -101,6 +105,8 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 	 * copied into special ColumnStep objects, which contain more fields with
 	 * regard to layout.
 	 * 
+	 * Needs to be called from the UI thread
+	 * 
 	 * @param programExecution
 	 */
 	public void displayProgramExecution(ProgramExecution programExecution) {
@@ -130,6 +136,27 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 
 		layout();
 		redraw();
+	}
+	
+	@Override
+	public void programExecutionChanged(final ProgramExecution newProgramExecution) {
+		Display.getDefault().asyncExec(new Runnable() {
+			@Override
+			public void run() {
+				displayProgramExecution(newProgramExecution);
+			}
+		});
+		
+	}
+
+	@Override
+	public void programExecutionRemoved() {
+		Display.getDefault().asyncExec(new Runnable() {
+			@Override
+			public void run() {
+				displayProgramExecution(null);
+			}
+		});		
 	}
 
 	/**
@@ -300,12 +327,14 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 	@Override
 	public void columnCreated() {
 		System.out.println("Column created");
+		ProgramExecutionManager.getDefault().addProgramExecutionListener(this);
 
 	}
 
 	@Override
 	public void columnRemoved() {
 		System.out.println("Column removed");
+		ProgramExecutionManager.getDefault().removeProgramExecutionListener(this);
 	}
 
 	/**

@@ -1,6 +1,8 @@
-package nl.avans.plugin;
+package nl.avans.plugin.debug;
 
 import java.util.HashMap;
+
+import nl.avans.plugin.TimeoutChecker;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
@@ -43,8 +45,10 @@ public class BreakpointListener implements IJavaBreakpointListener {
 	@Override
 	public int installingBreakpoint(IJavaDebugTarget target,
 			IJavaBreakpoint breakpoint, IJavaType type) {
-		System.out.println("Installing breakpoint");
-		return INSTALL;
+		if(breakpoint instanceof StepRecorderBreakpoint)
+			return INSTALL;
+		
+		return DONT_CARE;
 	}
 
 	@Override

@@ -2,10 +2,15 @@ package nl.avans.plugin;
 
 import java.util.List;
 
+import nl.avans.plugin.debug.BreakpointListener;
+import nl.avans.plugin.debug.ProgramExecutionManager;
 import nl.avans.plugin.debug.StepRecorderBreakpoint;
+import nl.avans.plugin.model.ProgramExecution;
 
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.Plugin;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.IBreakpointManager;
@@ -69,8 +74,9 @@ public class AvansCompilationParticipant extends CompilationParticipant {
 		}
 		
 		StepRecorderBreakpoint breakpoint = null;
+		ProgramExecution programExecution = new ProgramExecution();
 		try {
-			breakpoint = new StepRecorderBreakpoint(project.findType("TienTeller"));
+			breakpoint = new StepRecorderBreakpoint(programExecution, project.findType("TienTeller"), 0, 0);
 		} catch (DebugException e2) {
 			// TODO Auto-generated catch block
 			e2.printStackTrace();
@@ -78,6 +84,7 @@ public class AvansCompilationParticipant extends CompilationParticipant {
 			// TODO Auto-generated catch block
 			e2.printStackTrace();
 		}
+		
 		
 		
 		IBreakpointManager breakpointManager = DebugPlugin.getDefault().getBreakpointManager();
@@ -136,6 +143,8 @@ public class AvansCompilationParticipant extends CompilationParticipant {
 						// "TienTeller", "main", signature, -1, -1, -1, -0,
 						// true, null);
 						vmRunner.run(vmConfig, launch, null);
+						System.out.println("Finished!");
+						ProgramExecutionManager.getDefault().setProgramExecution(programExecution);
 					}
 				}
 			}
