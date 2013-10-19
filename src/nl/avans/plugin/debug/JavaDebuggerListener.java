@@ -81,8 +81,7 @@ public class JavaDebuggerListener implements IJavaBreakpointListener,
 	@Override
 	public int breakpointHit(IJavaThread thread, IJavaBreakpoint breakpoint) {
 		if (breakpoint instanceof StepRecorderBreakpoint) {
-			System.out.println("Hit breakpoint " + breakpoint + " " + this);
-
+			
 			StepRecorderBreakpoint stepBreakpoint = (StepRecorderBreakpoint) breakpoint;
 			try {
 				stepBreakpoint.record((IJavaStackFrame) thread.getStackFrames()[0]);

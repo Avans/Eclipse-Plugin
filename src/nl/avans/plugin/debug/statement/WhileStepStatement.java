@@ -19,6 +19,8 @@ public class WhileStepStatement extends StepStatement {
 	// 0-indexed end line of the while loop
 	private int endLine;
 
+	boolean ignoreStep = true;
+
 	public WhileStepStatement(WhileStatement statement, IType type) {
 		super(statement, type);
 		endLine = getLineForPosition(type, getCharEnd());
@@ -28,7 +30,13 @@ public class WhileStepStatement extends StepStatement {
 	}
 
 	@Override
-	public Step createStepFromThread(IJavaStackFrame stackframe) throws DebugException {
+	public Step createStepFromThread(IJavaStackFrame stackframe)
+			throws DebugException {
+		if (ignoreStep) {
+			ignoreStep = false;
+			return null;
+		}
+
 		Step step = super.createStepFromThread(stackframe);
 		boolean evaluated = expression.evaluateForTruth(stackframe);
 		step.value = new BooleanValue(evaluated);
@@ -56,6 +64,8 @@ public class WhileStepStatement extends StepStatement {
 					+ " niet waar is", line, true));
 			step.stepLines.add(new StepLine("Stoppen we met loopen", endLine,
 					false));
+			
+			ignoreStep = true;
 		}
 		return step;
 	}

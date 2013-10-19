@@ -7,6 +7,7 @@ import nl.avans.plugin.debug.JavaDebuggerListener;
 import nl.avans.plugin.debug.JavaDebuggerListener.TerminatorListener;
 import nl.avans.plugin.debug.ProgramExecutionManager;
 import nl.avans.plugin.debug.StepRecorderBreakpoint;
+import nl.avans.plugin.debug.statement.AssignmentStepStatement;
 import nl.avans.plugin.debug.statement.StepStatement;
 import nl.avans.plugin.debug.statement.WhileStepStatement;
 import nl.avans.plugin.model.ProgramExecution;
@@ -32,10 +33,12 @@ import org.eclipse.jdt.core.compiler.CompilationParticipant;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
+import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
+import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.WhileStatement;
 import org.eclipse.jdt.internal.debug.core.JDIDebugPlugin;
 import org.eclipse.jdt.internal.launching.JavaSourceLookupDirector;
@@ -201,10 +204,13 @@ public class AvansCompilationParticipant extends CompilationParticipant
 			 * Create a StepStatement that can handle the statement
 			 */
 			if (statement.getNodeType() == ASTNode.WHILE_STATEMENT) {
+				WhileStatement whileStatement = (WhileStatement)statement;
 				stepStatement = new WhileStepStatement(
-						(WhileStatement) statement, type);
-			} else {
-				// stepStatement = new StepStatement(statement, type);
+						whileStatement, type);
+				Block block = (Block) whileStatement.getBody(); 
+				breakpoints.addAll(getBreakpointsForStatements(block.statements(), type));
+			} else if(statement.getNodeType() == ASTNode.VARIABLE_DECLARATION_STATEMENT) {
+				stepStatement = new AssignmentStepStatement((VariableDeclarationStatement)statement, type);
 			}
 
 			if (stepStatement != null) {
