@@ -7,6 +7,7 @@ import nl.avans.plugin.step.Step;
 import nl.avans.plugin.ui.stepline.StepLine;
 import nl.avans.plugin.value.BooleanValue;
 
+import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.model.IThread;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
@@ -45,7 +46,7 @@ public class StepStatement {
 	
 	
 
-	public Step createStepFromThread(IJavaStackFrame stackframe) {
+	public Step createStepFromThread(IJavaStackFrame stackframe) throws DebugException {
 		Step step = new Step();
 		step.line = line;
 		step.value = new BooleanValue(true);

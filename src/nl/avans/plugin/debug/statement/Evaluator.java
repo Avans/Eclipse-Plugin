@@ -113,74 +113,68 @@ public abstract class Evaluator {
 	 * @throws DebugException
 	 */
 	public static IJavaValue evaluate(String stringValue,
-			final IJavaStackFrame stack) {
-		try {
-			IAstEvaluationEngine engine = getASTEvaluationEngine(stack);
-			final IEvaluationResult[] results = new IEvaluationResult[1];
-			IEvaluationListener listener = new IEvaluationListener() {
-				@Override
-				public void evaluationComplete(IEvaluationResult result) {
-					synchronized (stack) {
-						results[0] = result;
-						stack.notifyAll();
-					}
-				}
-			};
-			synchronized (stack) {
-				if (stack.isTerminated()) // If the stack is terminated the wait
-											// below will hang forever, so abort
-											// in
-											// that case.
-					return null;
-				engine.evaluate(stringValue, stack, listener,
-						DebugEvent.EVALUATION_IMPLICIT, false);
-				try {
-					stack.wait(TIMEOUT_TIME_MS); // Timeout the
-													// execution.
-				} catch (InterruptedException e) {
-					if (results[0] == null)
-						throw new RuntimeException(e);
+			final IJavaStackFrame stack) throws DebugException {
+		IAstEvaluationEngine engine = getASTEvaluationEngine(stack);
+		final IEvaluationResult[] results = new IEvaluationResult[1];
+		IEvaluationListener listener = new IEvaluationListener() {
+			@Override
+			public void evaluationComplete(IEvaluationResult result) {
+				synchronized (stack) {
+					results[0] = result;
+					stack.notifyAll();
 				}
 			}
-			IEvaluationResult result = results[0];
-			if (result == null) { // The evaluation timed out, so we need to
-									// cancel
-									// it and wait for it to finish. If we don't
-									// wait, the thread will be in a bad state
-									// and
-									// error for future evaluations until it
-									// finishes.
-				IJavaThread thread = (IJavaThread) stack.getThread();
-				thread.terminateEvaluation(); // Unfortunately, we cannot easily
-												// tell when it actually
-												// terminates
-												// (this method just sets a flag
-												// asking it to).
-				try {
-					for (int i = 0; thread.isPerformingEvaluation(); i++) {
-						if (i == 20) // Eventually give up on the termination
-										// and
-										// abort.
-							throw new Error("Unable to terminate evaluation.");
-						Thread.sleep(TIMEOUT_TIME_MS / 10);
-					}
-				} catch (InterruptedException e) {
-					throw new RuntimeException(e);
-				}
+		};
+		synchronized (stack) {
+			if (stack.isTerminated()) // If the stack is terminated the wait
+										// below will hang forever, so abort
+										// in
+										// that case.
 				return null;
+			engine.evaluate(stringValue, stack, listener,
+					DebugEvent.EVALUATION_IMPLICIT, false);
+			try {
+				stack.wait(TIMEOUT_TIME_MS); // Timeout the
+												// execution.
+			} catch (InterruptedException e) {
+				if (results[0] == null)
+					throw new RuntimeException(e);
 			}
-			if (result.hasErrors()) {
-				String msg = "The following errors were encountered during evaluation.\n\n"
-						+ getErrors(result);
-				// showError("Evaluation error", msg, null);
-				throw new Error(msg);
+		}
+		IEvaluationResult result = results[0];
+		if (result == null) { // The evaluation timed out, so we need to
+								// cancel
+								// it and wait for it to finish. If we don't
+								// wait, the thread will be in a bad state
+								// and
+								// error for future evaluations until it
+								// finishes.
+			IJavaThread thread = (IJavaThread) stack.getThread();
+			thread.terminateEvaluation(); // Unfortunately, we cannot easily
+											// tell when it actually
+											// terminates
+											// (this method just sets a flag
+											// asking it to).
+			try {
+				for (int i = 0; thread.isPerformingEvaluation(); i++) {
+					if (i == 20) // Eventually give up on the termination
+									// and
+									// abort.
+						throw new Error("Unable to terminate evaluation.");
+					Thread.sleep(TIMEOUT_TIME_MS / 10);
+				}
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
 			}
-			return result.getValue();
-
-		} catch (DebugException e) {
-			e.printStackTrace();
 			return null;
 		}
+		if (result.hasErrors()) {
+			String msg = "The following errors were encountered during evaluation.\n\n"
+					+ getErrors(result);
+			// showError("Evaluation error", msg, null);
+			throw new Error(msg);
+		}
+		return result.getValue();
 	}
 
 }

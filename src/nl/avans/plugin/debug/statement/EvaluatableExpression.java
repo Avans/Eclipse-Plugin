@@ -12,36 +12,35 @@ import org.eclipse.jdt.debug.core.IJavaValue;
 
 public abstract class EvaluatableExpression {
 
-	public EvaluatableExpression(Expression expression ) {
-		
+	public EvaluatableExpression(Expression expression) {
+
 	}
-	
+
 	public Value evaluateForValue(IJavaStackFrame stackframe) {
 		return new nl.avans.plugin.value.StringValue("Hoi!");
 	}
-	
-	public String evaluateForPresentableString(IJavaStackFrame stackframe) {
-		return "4 < 6";
+
+	public String evaluateForPresentableString(IJavaStackFrame stackframe)
+			throws DebugException {
+		return Evaluator.evaluate(toEvaluatableString(), stackframe)
+				.getValueString();
 	}
-	
-	public boolean evaluateForTruth(IJavaStackFrame stackframe) {
-		IJavaValue value = Evaluator.evaluate(toEvaluatableString(), stackframe);
-		
-		try {
-			return value.getValueString().equals("true");
-		} catch (DebugException e) {
-			e.printStackTrace();
-			return false;
-		}
+
+	public boolean evaluateForTruth(IJavaStackFrame stackframe)
+			throws DebugException {
+		IJavaValue value = Evaluator
+				.evaluate(toEvaluatableString(), stackframe);
+		return value.getValueString().equals("true");
 	}
-	
+
 	public abstract String toEvaluatableString();
-	
-	public static EvaluatableExpression getEvaluatableExpressionForExpression(Expression expression) {
-		if(expression.getNodeType() == Expression.INFIX_EXPRESSION) {
-			return new InFixEvaluatableExpression((InfixExpression)expression );
+
+	public static EvaluatableExpression getEvaluatableExpressionForExpression(
+			Expression expression) {
+		if (expression.getNodeType() == Expression.INFIX_EXPRESSION) {
+			return new InFixEvaluatableExpression((InfixExpression) expression);
 		} else {
-			return new DefaultEvaluatableExpression(expression); 
+			return new DefaultEvaluatableExpression(expression);
 		}
 	}
 }
