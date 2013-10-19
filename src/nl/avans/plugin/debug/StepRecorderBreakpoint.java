@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 
+import nl.avans.plugin.debug.statement.StepStatement;
 import nl.avans.plugin.model.ProgramExecution;
 import nl.avans.plugin.step.Step;
 import nl.avans.plugin.ui.stepline.StepLine;
@@ -24,13 +25,17 @@ import org.eclipse.jdt.internal.debug.core.breakpoints.JavaLineBreakpoint;
 public class StepRecorderBreakpoint extends JavaLineBreakpoint {
 
 	private ProgramExecution programExecution;
+	private StepStatement statement;
 
-	public StepRecorderBreakpoint(IType type, int charStart, int charEnd)
+	public StepRecorderBreakpoint(IType type, StepStatement statement)
 			throws CoreException {
-		super(type.getResource(), type.getFullyQualifiedName(),
-				getLineForPosition(type, charStart), charStart, charEnd, -1,
-				false, new HashMap<String, Object>());
+		super(type.getResource(), type.getFullyQualifiedName(), statement
+				.getOneIndexedLineNumber(), statement.getCharStart(), statement
+				.getCharEnd(), -1, false, new HashMap<String, Object>());
+		
+		this.statement = statement;
 
+		System.out.println("Breakpoint set at " + statement.getOneIndexedLineNumber());
 		/**
 		 * For pete's sake, do not persist this breakpoint. It is meant as a
 		 * super-temporary breakpoint and should be removed at the first
@@ -38,47 +43,14 @@ public class StepRecorderBreakpoint extends JavaLineBreakpoint {
 		 */
 		setPersisted(false);
 	}
-	
+
 	public void setProgramExecution(ProgramExecution programExecution) {
 		this.programExecution = programExecution;
 	}
 
-	private static int getLineForPosition(IType type, int charStart)
-			throws JavaModelException {
-		// Calculate 1-indexed line from charStart and charEnd
-		String source = type.getCompilationUnit().getSource();
-		int line = source.substring(0, charStart).split("\n").length;
-		System.out.println("Line number: " + line);
-
-		return line;
-	}
-
-	private int getZeroIndexedLineNumber() {
-		try {
-			return getLineNumber() - 1;
-		} catch (CoreException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return 0;
-		}
-	}
-
 	public void record(IJavaThread thread) {
-		try {
-			IJavaStackFrame stack = (IJavaStackFrame) thread.getStackFrames()[0];
-
-			Step step = new Step();
-			step.line = getZeroIndexedLineNumber();
-			step.value = new BooleanValue(true);
-			List<StepLine> stepLines = new ArrayList<StepLine>();
-			stepLines.add(new StepLine("Omdat dit waar is...",
-					getZeroIndexedLineNumber(), true));
-			step.stepLines = stepLines;
-			programExecution.addStep(step);
-
-		} catch (DebugException e) {
-			e.printStackTrace();
-		}
-
+		Step step = statement.createStepFromThread(thread);
+		System.out.println(step);
+		programExecution.addStep(step);
 	}
 }

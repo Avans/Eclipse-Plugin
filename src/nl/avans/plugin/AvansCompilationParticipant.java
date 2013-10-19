@@ -7,6 +7,8 @@ import nl.avans.plugin.debug.JavaDebuggerListener;
 import nl.avans.plugin.debug.JavaDebuggerListener.TerminatorListener;
 import nl.avans.plugin.debug.ProgramExecutionManager;
 import nl.avans.plugin.debug.StepRecorderBreakpoint;
+import nl.avans.plugin.debug.statement.StepStatement;
+import nl.avans.plugin.debug.statement.WhileStepStatement;
 import nl.avans.plugin.model.ProgramExecution;
 
 import org.eclipse.core.runtime.CoreException;
@@ -34,6 +36,7 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
+import org.eclipse.jdt.core.dom.WhileStatement;
 import org.eclipse.jdt.internal.debug.core.JDIDebugPlugin;
 import org.eclipse.jdt.internal.launching.JavaSourceLookupDirector;
 import org.eclipse.jdt.launching.IVMInstall;
@@ -192,25 +195,27 @@ public class AvansCompilationParticipant extends CompilationParticipant
 		for (Object statementObject : statements) {
 
 			Statement statement = (Statement) statementObject;
+			StepStatement stepStatement = null;
+
+			/**
+			 * Create a StepStatement that can handle the statement
+			 */
 			if (statement.getNodeType() == ASTNode.WHILE_STATEMENT) {
-				System.out.println("While Statement: " + statement);
+				stepStatement = new WhileStepStatement(
+						(WhileStatement) statement, type);
+			} else {
+				// stepStatement = new StepStatement(statement, type);
+			}
+
+			if (stepStatement != null) {
 				try {
 					StepRecorderBreakpoint breakpoint = new StepRecorderBreakpoint(
-							type, statement.getStartPosition(),
-							statement.getStartPosition()
-									+ statement.getLength());
+							type, stepStatement);
 					breakpoints.add(breakpoint);
-				} catch (DebugException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (JavaModelException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
 				} catch (CoreException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-
 			}
 
 		}
@@ -226,7 +231,8 @@ public class AvansCompilationParticipant extends CompilationParticipant
 	}
 
 	/**
-	 * Undo any weird configuration we may have caused to the debugger environment
+	 * Undo any weird configuration we may have caused to the debugger
+	 * environment
 	 */
 	private void cleanup() {
 		JavaDebuggerListener.getDefault().setNeverSuspend(false);
