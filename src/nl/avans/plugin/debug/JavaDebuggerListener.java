@@ -1,20 +1,10 @@
 package nl.avans.plugin.debug;
 
-import java.util.HashMap;
-
-import nl.avans.plugin.TimeoutChecker;
-
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.debug.core.DebugEvent;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.IDebugEventSetListener;
 import org.eclipse.debug.core.model.IDebugTarget;
-import org.eclipse.debug.core.model.IValue;
-import org.eclipse.debug.core.model.IVariable;
-import org.eclipse.jdt.core.IJavaElement;
-import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.dom.Message;
 import org.eclipse.jdt.debug.core.IJavaBreakpoint;
 import org.eclipse.jdt.debug.core.IJavaBreakpointListener;
@@ -23,15 +13,7 @@ import org.eclipse.jdt.debug.core.IJavaLineBreakpoint;
 import org.eclipse.jdt.debug.core.IJavaStackFrame;
 import org.eclipse.jdt.debug.core.IJavaThread;
 import org.eclipse.jdt.debug.core.IJavaType;
-import org.eclipse.jdt.debug.core.IJavaValue;
-import org.eclipse.jdt.debug.eval.IAstEvaluationEngine;
-import org.eclipse.jdt.debug.eval.IEvaluationListener;
-import org.eclipse.jdt.debug.eval.IEvaluationResult;
 import org.eclipse.jdt.internal.debug.core.JDIDebugPlugin;
-import org.eclipse.jdt.internal.debug.core.model.JDIDebugTarget;
-
-import com.sun.jdi.InvocationException;
-import com.sun.jdi.ObjectReference;
 
 /**
  * Singleton class that mindlessly listens to debugger events.
@@ -102,7 +84,11 @@ public class JavaDebuggerListener implements IJavaBreakpointListener,
 			System.out.println("Hit breakpoint " + breakpoint + " " + this);
 
 			StepRecorderBreakpoint stepBreakpoint = (StepRecorderBreakpoint) breakpoint;
-			stepBreakpoint.record(thread);
+			try {
+				stepBreakpoint.record((IJavaStackFrame) thread.getStackFrames()[0]);
+			} catch (DebugException e) {
+				e.printStackTrace();
+			}
 		}
 
 		return neverSuspend ? DONT_SUSPEND : DONT_CARE;

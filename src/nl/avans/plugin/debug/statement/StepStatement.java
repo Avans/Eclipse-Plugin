@@ -11,6 +11,7 @@ import org.eclipse.debug.core.model.IThread;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.Statement;
+import org.eclipse.jdt.debug.core.IJavaStackFrame;
 
 public class StepStatement {
 
@@ -44,7 +45,7 @@ public class StepStatement {
 	
 	
 
-	public Step createStepFromThread(IThread thread) {
+	public Step createStepFromThread(IJavaStackFrame stackframe) {
 		Step step = new Step();
 		step.line = line;
 		step.value = new BooleanValue(true);
