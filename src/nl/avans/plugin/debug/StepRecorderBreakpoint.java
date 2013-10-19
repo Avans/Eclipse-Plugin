@@ -25,13 +25,11 @@ public class StepRecorderBreakpoint extends JavaLineBreakpoint {
 
 	private ProgramExecution programExecution;
 
-	public StepRecorderBreakpoint(ProgramExecution programExecution,
-			IType type, int charStart, int charEnd) throws CoreException {
+	public StepRecorderBreakpoint(IType type, int charStart, int charEnd)
+			throws CoreException {
 		super(type.getResource(), type.getFullyQualifiedName(),
 				getLineForPosition(type, charStart), charStart, charEnd, -1,
 				false, new HashMap<String, Object>());
-
-		this.programExecution = programExecution;
 
 		/**
 		 * For pete's sake, do not persist this breakpoint. It is meant as a
@@ -39,6 +37,10 @@ public class StepRecorderBreakpoint extends JavaLineBreakpoint {
 		 * possible instance.
 		 */
 		setPersisted(false);
+	}
+	
+	public void setProgramExecution(ProgramExecution programExecution) {
+		this.programExecution = programExecution;
 	}
 
 	private static int getLineForPosition(IType type, int charStart)

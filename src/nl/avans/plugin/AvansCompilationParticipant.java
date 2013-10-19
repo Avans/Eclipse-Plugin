@@ -14,6 +14,7 @@ import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.IBreakpointManager;
 import org.eclipse.debug.core.ILaunch;
+import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.core.Launch;
 import org.eclipse.debug.core.model.IBreakpoint;
@@ -48,60 +49,49 @@ public class AvansCompilationParticipant extends CompilationParticipant
 	@Override
 	public boolean isActive(IJavaProject project) {
 		return true;
-
 	}
 
 	@Override
 	public void buildFinished(IJavaProject project) {
 		try {
+			/**
+			 * Remove any previous breakpoints
+			 */
 			removeAllBreakpoints();
-		} catch (CoreException e2) {
-			// TODO Auto-generated catch block
-			e2.printStackTrace();
-		}
-		
-		programExecution = new ProgramExecution();
-		
-		List<StepRecorderBreakpoint> breakpoints = getBreakpointsForProject(project);
-		System.out.println("Breakpoints: " + breakpoints);
-		/*
-		 * StepRecorderBreakpoint breakpoint = null; try {
-		 * 
-		 * } catch (DebugException e2) { // TODO Auto-generated catch block
-		 * e2.printStackTrace(); } catch (JavaModelException e2) { // TODO
-		 * Auto-generated catch block e2.printStackTrace(); }
-		 */
 
-		JavaDebuggerListener debuggerListener = JavaDebuggerListener
-				.getDefault();
-		debuggerListener.setTerminatorListener(this);
-		debuggerListener.setNeverSuspend(true);
+			programExecution = new ProgramExecution();
 
-		IBreakpointManager breakpointManager = DebugPlugin.getDefault()
-				.getBreakpointManager();
-		try {
-			breakpointManager.addBreakpoints(breakpoints.toArray(new StepRecorderBreakpoint[0]));
-		} catch (CoreException e2) {
-			// TODO Auto-generated catch block
-			e2.printStackTrace();
-		}
+			/**
+			 * Configure the DebuggerListener
+			 */
+			JavaDebuggerListener debuggerListener = JavaDebuggerListener
+					.getDefault();
+			debuggerListener.setTerminatorListener(this);
+			debuggerListener.setNeverSuspend(true);
 
-		/*
-		try {
-			//breakpointManager.addBreakpoint(breakpoint);
-		} catch (CoreException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		*/
+			/**
+			 * Install temporary breakpoints
+			 */
+			List<StepRecorderBreakpoint> breakpoints = getBreakpointsForProject(project);
+			for (StepRecorderBreakpoint breakpoint : breakpoints) {
+				breakpoint.setProgramExecution(programExecution);
+			}
+			DebugPlugin
+					.getDefault()
+					.getBreakpointManager()
+					.addBreakpoints(
+							breakpoints.toArray(new StepRecorderBreakpoint[0]));
 
-		IVMInstall vmInstall = null;
+			/**
+			 * Launch the application in debug mode in the background
+			 */
+			IVMInstall vmInstall = null;
 
-		try {
 			vmInstall = JavaRuntime.getVMInstall(project);
 			if (vmInstall == null)
 				vmInstall = JavaRuntime.getDefaultVMInstall();
 			if (vmInstall != null) {
+
 				IVMRunner vmRunner = vmInstall
 						.getVMRunner(ILaunchManager.DEBUG_MODE);
 
@@ -113,26 +103,24 @@ public class AvansCompilationParticipant extends CompilationParticipant
 					} catch (CoreException e) {
 					}
 					if (classPath != null) {
-						VMRunnerConfiguration vmConfig = new VMRunnerConfiguration(
-								"TienTeller", classPath);
-
-						ILaunchManager manager = DebugPlugin.getDefault()
-								.getLaunchManager();
+						ILaunchConfiguration launchConfiguration = DebugPlugin
+								.getDefault().getLaunchManager()
+								.getLaunchConfigurations()[0];
 
 						JavaSourceLookupDirector sourceLocator = new JavaSourceLookupDirector();
-						sourceLocator.initializeDefaults(DebugPlugin
-								.getDefault().getLaunchManager()
-								.getLaunchConfigurations()[0]);
+						sourceLocator.initializeDefaults(launchConfiguration);
 
 						ILaunch launch = new Launch(null,
 								ILaunchManager.DEBUG_MODE, sourceLocator);
 
-						IType tienTeller = project.findType("TienTeller");
-						IMethod main = tienTeller.getMethods()[0];
-						String signature = main.getSignature();
+						String mainTypeString = launchConfiguration
+								.getAttribute(
+										"org.eclipse.jdt.launching.MAIN_TYPE",
+										"");
+						IType mainType = project.findType(mainTypeString);
 
-						System.out.println(tienTeller + " " + main + " "
-								+ signature);
+						VMRunnerConfiguration vmConfig = new VMRunnerConfiguration(
+								mainType.getFullyQualifiedName(), classPath);
 
 						System.out.println("3 2 1 launch!");
 						vmRunner.run(vmConfig, launch, null);
@@ -140,13 +128,13 @@ public class AvansCompilationParticipant extends CompilationParticipant
 				}
 			}
 		} catch (CoreException e1) {
-			// TODO Auto-generated catch block
+			cleanup();
 			e1.printStackTrace();
 		}
 
 	}
 
-	private List<StepRecorderBreakpoint> getBreakpointsForProject(
+	private static List<StepRecorderBreakpoint> getBreakpointsForProject(
 			IJavaProject project) {
 		List<StepRecorderBreakpoint> breakpoints = new ArrayList<StepRecorderBreakpoint>();
 		IPackageFragment[] packages;
@@ -170,7 +158,7 @@ public class AvansCompilationParticipant extends CompilationParticipant
 		return breakpoints;
 	}
 
-	private List<StepRecorderBreakpoint> getBreakpointsCompilationUnit(
+	private static List<StepRecorderBreakpoint> getBreakpointsCompilationUnit(
 			ICompilationUnit unit) throws JavaModelException {
 		List<StepRecorderBreakpoint> breakpoints = new ArrayList<StepRecorderBreakpoint>();
 		String source = unit.getSource();
@@ -197,7 +185,8 @@ public class AvansCompilationParticipant extends CompilationParticipant
 		return breakpoints;
 	}
 
-	private List<StepRecorderBreakpoint> getBreakpointsForStatements(List statements, IType type) {
+	private static List<StepRecorderBreakpoint> getBreakpointsForStatements(
+			List statements, IType type) {
 		List<StepRecorderBreakpoint> breakpoints = new ArrayList<StepRecorderBreakpoint>();
 		// For all while-statements in the method
 		for (Object statementObject : statements) {
@@ -206,7 +195,10 @@ public class AvansCompilationParticipant extends CompilationParticipant
 			if (statement.getNodeType() == ASTNode.WHILE_STATEMENT) {
 				System.out.println("While Statement: " + statement);
 				try {
-					StepRecorderBreakpoint breakpoint = new StepRecorderBreakpoint(programExecution, type, statement.getStartPosition(), statement.getStartPosition() + statement.getLength());
+					StepRecorderBreakpoint breakpoint = new StepRecorderBreakpoint(
+							type, statement.getStartPosition(),
+							statement.getStartPosition()
+									+ statement.getLength());
 					breakpoints.add(breakpoint);
 				} catch (DebugException e) {
 					// TODO Auto-generated catch block
@@ -218,7 +210,7 @@ public class AvansCompilationParticipant extends CompilationParticipant
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				
+
 			}
 
 		}
@@ -228,28 +220,39 @@ public class AvansCompilationParticipant extends CompilationParticipant
 	@Override
 	public void debugTerminated() {
 		System.out.println("Terminated!");
-		JavaDebuggerListener.getDefault().setNeverSuspend(false);
-		try {
-			removeAllBreakpoints();
-		} catch (CoreException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		cleanup();
 		ProgramExecutionManager.getDefault().setProgramExecution(
 				programExecution);
 	}
 
+	/**
+	 * Undo any weird configuration we may have caused to the debugger environment
+	 */
+	private void cleanup() {
+		JavaDebuggerListener.getDefault().setNeverSuspend(false);
+		try {
+			removeAllBreakpoints();
+		} catch (CoreException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * 
+	 */
 	private void removeAllBreakpoints() throws CoreException {
-
-		ArrayList<StepRecorderBreakpoint> stepBreakpoints = new ArrayList<StepRecorderBreakpoint>();
-
 		IBreakpointManager breakpointManager = DebugPlugin.getDefault()
 				.getBreakpointManager();
+
+		// Find all StepRecorderBreakpoint
+		List<StepRecorderBreakpoint> stepBreakpoints = new ArrayList<StepRecorderBreakpoint>();
 		for (IBreakpoint breakpoint : breakpointManager.getBreakpoints()) {
 			if (breakpoint instanceof StepRecorderBreakpoint) {
 				stepBreakpoints.add((StepRecorderBreakpoint) breakpoint);
 			}
 		}
+
+		// And remove them all at once
 		breakpointManager.removeBreakpoints(
 				stepBreakpoints.toArray(new StepRecorderBreakpoint[0]), true);
 
