@@ -8,6 +8,7 @@ import nl.avans.plugin.debug.JavaDebuggerListener.TerminatorListener;
 import nl.avans.plugin.debug.ProgramExecutionManager;
 import nl.avans.plugin.debug.StepRecorderBreakpoint;
 import nl.avans.plugin.debug.statement.AssignmentStepStatement;
+import nl.avans.plugin.debug.statement.PrintStepStatement;
 import nl.avans.plugin.debug.statement.StepStatement;
 import nl.avans.plugin.debug.statement.WhileStepStatement;
 import nl.avans.plugin.model.ProgramExecution;
@@ -35,7 +36,10 @@ import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.Expression;
+import org.eclipse.jdt.core.dom.ExpressionStatement;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
@@ -203,16 +207,43 @@ public class AvansCompilationParticipant extends CompilationParticipant
 			/**
 			 * Create a StepStatement that can handle the statement
 			 */
+
+			// While statement
 			if (statement.getNodeType() == ASTNode.WHILE_STATEMENT) {
-				WhileStatement whileStatement = (WhileStatement)statement;
-				stepStatement = new WhileStepStatement(
-						whileStatement, type);
-				Block block = (Block) whileStatement.getBody(); 
-				breakpoints.addAll(getBreakpointsForStatements(block.statements(), type));
-			} else if(statement.getNodeType() == ASTNode.VARIABLE_DECLARATION_STATEMENT) {
-				stepStatement = new AssignmentStepStatement((VariableDeclarationStatement)statement, type);
+				WhileStatement whileStatement = (WhileStatement) statement;
+				stepStatement = new WhileStepStatement(whileStatement, type);
+				Block block = (Block) whileStatement.getBody();
+				breakpoints.addAll(getBreakpointsForStatements(
+						block.statements(), type));
 			}
 
+			// Variable (declaration and) assignment
+			else if (statement.getNodeType() == ASTNode.VARIABLE_DECLARATION_STATEMENT) {
+				stepStatement = new AssignmentStepStatement(
+						(VariableDeclarationStatement) statement, type);
+			}
+
+			// Expressions
+			else if (statement.getNodeType() == ASTNode.EXPRESSION_STATEMENT) {
+				Expression expression = ((ExpressionStatement) statement)
+						.getExpression();
+
+				// Print statement
+				if (expression.getNodeType() == ASTNode.METHOD_INVOCATION) {
+					MethodInvocation methodInvocation = (MethodInvocation) expression;
+					if (methodInvocation.getExpression() != null
+							&& methodInvocation.getExpression().toString()
+									.equals("System.out")
+							&& methodInvocation.getName().toString()
+									.equals("println")) {
+
+						stepStatement = new PrintStepStatement(statement, type,
+								methodInvocation);
+					}
+				}
+
+			}
+			// If we found a node, use it to
 			if (stepStatement != null) {
 				try {
 					StepRecorderBreakpoint breakpoint = new StepRecorderBreakpoint(
