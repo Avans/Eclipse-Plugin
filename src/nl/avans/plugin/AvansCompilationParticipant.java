@@ -34,6 +34,7 @@ import org.eclipse.jdt.core.compiler.CompilationParticipant;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
+import org.eclipse.jdt.core.dom.Assignment;
 import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.Expression;
@@ -217,7 +218,7 @@ public class AvansCompilationParticipant extends CompilationParticipant
 						block.statements(), type));
 			}
 
-			// Variable (declaration and) assignment
+			// Variable declaration
 			else if (statement.getNodeType() == ASTNode.VARIABLE_DECLARATION_STATEMENT) {
 				stepStatement = new AssignmentStepStatement(
 						(VariableDeclarationStatement) statement, type);
@@ -228,8 +229,13 @@ public class AvansCompilationParticipant extends CompilationParticipant
 				Expression expression = ((ExpressionStatement) statement)
 						.getExpression();
 
+				// Variable assignment
+				if(expression.getNodeType() == ASTNode.ASSIGNMENT) {
+					stepStatement = new AssignmentStepStatement(statement, type, (Assignment)expression);
+				}
+				
 				// Print statement
-				if (expression.getNodeType() == ASTNode.METHOD_INVOCATION) {
+				else if (expression.getNodeType() == ASTNode.METHOD_INVOCATION) {
 					MethodInvocation methodInvocation = (MethodInvocation) expression;
 					if (methodInvocation.getExpression() != null
 							&& methodInvocation.getExpression().toString()
@@ -241,6 +247,8 @@ public class AvansCompilationParticipant extends CompilationParticipant
 								methodInvocation);
 					}
 				}
+				int x = 0;
+				x = x +1;
 
 			}
 			// If we found a node, use it to
