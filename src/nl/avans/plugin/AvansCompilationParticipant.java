@@ -8,6 +8,7 @@ import nl.avans.plugin.debug.JavaDebuggerListener.TerminatorListener;
 import nl.avans.plugin.debug.ProgramExecutionManager;
 import nl.avans.plugin.debug.StepRecorderBreakpoint;
 import nl.avans.plugin.debug.statement.AssignmentStepStatement;
+import nl.avans.plugin.debug.statement.IfStepStatement;
 import nl.avans.plugin.debug.statement.PrintStepStatement;
 import nl.avans.plugin.debug.statement.StepStatement;
 import nl.avans.plugin.debug.statement.WhileStepStatement;
@@ -39,6 +40,7 @@ import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
+import org.eclipse.jdt.core.dom.IfStatement;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.Statement;
@@ -222,6 +224,17 @@ public class AvansCompilationParticipant extends CompilationParticipant
 			else if (statement.getNodeType() == ASTNode.VARIABLE_DECLARATION_STATEMENT) {
 				stepStatement = new AssignmentStepStatement(
 						(VariableDeclarationStatement) statement, type);
+				
+			} else if(statement.getNodeType() == ASTNode.IF_STATEMENT) {
+				IfStatement ifStatement = (IfStatement)statement;
+				Block thenBlock = (Block)ifStatement.getThenStatement();
+				Block elseBlock = (Block)ifStatement.getElseStatement();
+				if(thenBlock != null)
+					breakpoints.addAll(getBreakpointsForStatements(thenBlock.statements(), type));
+				if(elseBlock != null)
+					breakpoints.addAll(getBreakpointsForStatements(elseBlock.statements(), type));
+				
+				stepStatement = new IfStepStatement(ifStatement, type);
 			}
 
 			// Expressions
@@ -248,7 +261,13 @@ public class AvansCompilationParticipant extends CompilationParticipant
 					}
 				}
 				int x = 0;
-				x = x +1;
+				if(x == 0) {
+					System.out.println("0");
+				} else if(x == 1) {
+					System.out.println("1");
+				} else {
+					System.out.println("many");
+				}
 
 			}
 			// If we found a node, use it to

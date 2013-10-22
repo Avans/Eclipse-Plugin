@@ -22,8 +22,6 @@ public class AssignmentStepStatement extends StepStatement {
 		VariableDeclarationFragment fragment = (VariableDeclarationFragment) statement.fragments().get(0);
 		variableName = fragment.getName().toString();
 		expression = EvaluatableExpression.getEvaluatableExpressionForExpression(fragment.getInitializer());
-		
-		
 	}
 	
 	public AssignmentStepStatement(Statement statement, IType type, Assignment assignment) {
