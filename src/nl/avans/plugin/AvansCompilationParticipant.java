@@ -260,15 +260,6 @@ public class AvansCompilationParticipant extends CompilationParticipant
 								methodInvocation);
 					}
 				}
-				int x = 0;
-				if(x == 0) {
-					System.out.println("0");
-				} else if(x == 1) {
-					System.out.println("1");
-				} else {
-					System.out.println("many");
-				}
-
 			}
 			// If we found a node, use it to
 			if (stepStatement != null) {

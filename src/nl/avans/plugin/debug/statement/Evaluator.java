@@ -15,6 +15,7 @@ import org.eclipse.jdt.debug.core.IJavaStackFrame;
 import org.eclipse.jdt.debug.core.IJavaThread;
 import org.eclipse.jdt.debug.core.IJavaType;
 import org.eclipse.jdt.debug.core.IJavaValue;
+import org.eclipse.jdt.debug.core.IJavaVariable;
 import org.eclipse.jdt.debug.eval.IAstEvaluationEngine;
 import org.eclipse.jdt.debug.eval.IEvaluationListener;
 import org.eclipse.jdt.debug.eval.IEvaluationResult;
@@ -35,7 +36,6 @@ public abstract class Evaluator {
 	 */
 	private static String getErrors(IEvaluationResult result) {
 		StringBuilder sb = new StringBuilder();
-		// buffer.append("Error on evaluation of: ").append(result.getSnippet()).append("\n");
 		if (result.getException() == null) {
 			String[] messages = result.getErrorMessages();
 			for (int i = 0; i < messages.length; i++)
@@ -119,6 +119,13 @@ public abstract class Evaluator {
 	 */
 	public static IJavaValue evaluate(String stringValue,
 			final IJavaStackFrame stack) throws DebugException {
+		
+		// Try if it is just an ordinary variable
+		IJavaVariable variable = stack.findVariable(stringValue);
+		if(variable != null)
+			return (IJavaValue) variable.getValue();
+		
+	
 		IAstEvaluationEngine engine = getASTEvaluationEngine(stack);
 		final IEvaluationResult[] results = new IEvaluationResult[1];
 		IEvaluationListener listener = new IEvaluationListener() {

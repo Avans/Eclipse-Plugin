@@ -1,5 +1,7 @@
 package nl.avans.plugin.value;
 
+import nl.avans.plugin.column.ColumnStep;
+import nl.avans.plugin.column.ColumnStep.DisplayMode;
 import nl.avans.plugin.column.ColumnStep.State;
 
 import org.eclipse.swt.graphics.GC;
@@ -13,11 +15,11 @@ public class IntValue extends Value {
 	}
 
 	@Override
-	public void paint(GC gc, Value maximalValue, State executionState, int x, int y, int width,
+	public void paint(GC gc, ColumnStep.DisplayMode displayMode, Value maximalValue, State executionState, int x, int y, int width,
 			int height) {
 		gc.setFont(FONT);
 		
-		if(gc.stringExtent(value+"").x <= width) {
+		if(displayMode == ColumnStep.DisplayMode.FULL) {
 			paintText(value+"", gc, executionState, x, y, width, height);
 		} else {
 			if(maximalValue instanceof IntValue) {
@@ -31,6 +33,15 @@ public class IntValue extends Value {
 			} else {
 				paintDefault(gc, executionState, x, y, width > 2 ? width - 1 : width, height);
 			}
+		}
+	}
+	
+	@Override
+	public DisplayMode getPreferredDisplayMode(GC gc, int width) {
+		if(gc.stringExtent(value+"").x <= width) {
+			return ColumnStep.DisplayMode.FULL;
+		} else {
+			return ColumnStep.DisplayMode.TRUNCATED;
 		}
 	}
 	

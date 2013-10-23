@@ -1,11 +1,14 @@
 package nl.avans.plugin.value;
 
+import java.awt.MultipleGradientPaint.ColorSpaceType;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Rectangle;
 
+import nl.avans.plugin.column.ColumnStep;
 import nl.avans.plugin.column.ValueDrawer;
 import nl.avans.plugin.column.ColumnStep.State;
 
@@ -14,7 +17,8 @@ public class Value implements ValueDrawer, Comparable<Value> {
 	protected static final Font FONT = new Font(null, "Arial", 12, SWT.NORMAL);
 
 	@Override
-	public void paint(GC gc, Value maximalValue, State executionState, int x, int y, int width,
+	public void paint(GC gc, ColumnStep.DisplayMode displayMode,
+			Value maximalValue, State executionState, int x, int y, int width,
 			int height) {
 		paintDefault(gc, executionState, x, y, width, height);
 	}
@@ -31,15 +35,11 @@ public class Value implements ValueDrawer, Comparable<Value> {
 			double center_y;
 			double radius;
 
-			if (width > height) {
-				radius = height / 2.0;
-				center_y = radius;
-				center_x = radius;
-			} else {
-				radius = width / 2;
-				center_y = height / 2.0;
-				center_x = radius;
-			}
+			final double MAX_RADIUS = 3.0;
+
+			radius = Math.min(Math.min(width, height) / 2.0, MAX_RADIUS);
+			center_y = height / 2.0;
+			center_x = radius;
 
 			if (executionState == State.CURRENT)
 				radius++;
@@ -56,19 +56,26 @@ public class Value implements ValueDrawer, Comparable<Value> {
 		gc.setBackground(new Color(null, 255, 255, 255));
 		gc.setForeground(executionState.color);
 
-		if (gc.stringExtent(text).x <= width) {
-			gc.drawText(text, x, y);
-		} else {
-			// Text doesn't fit, such a shame.
-			// Default to the circle drawing
-			paintDefault(gc, executionState, x, y, width, height);
-		}
-
+		gc.drawText(text, x, y);
 	}
 
 	@Override
 	public int compareTo(Value o) {
 		return 0;
+	}
+
+	public ColumnStep.DisplayMode getPreferredDisplayMode(GC gc, int width) {
+		String text = getText();
+		if (text != null && gc.stringExtent(text).x <= width) {
+			return ColumnStep.DisplayMode.FULL;
+		} else {
+			return ColumnStep.DisplayMode.DOT;
+		}
+
+	}
+
+	protected String getText() {
+		return null;
 	}
 
 }

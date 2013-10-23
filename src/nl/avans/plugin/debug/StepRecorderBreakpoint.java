@@ -35,7 +35,6 @@ public class StepRecorderBreakpoint extends JavaLineBreakpoint {
 		
 		this.statement = statement;
 
-		System.out.println("Breakpoint set at " + statement.getOneIndexedLineNumber());
 		/**
 		 * For pete's sake, do not persist this breakpoint. It is meant as a
 		 * super-temporary breakpoint and should be removed at the first

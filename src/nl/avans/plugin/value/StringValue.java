@@ -1,5 +1,8 @@
 package nl.avans.plugin.value;
 
+import java.awt.DisplayMode;
+
+import nl.avans.plugin.column.ColumnStep;
 import nl.avans.plugin.column.ColumnStep.State;
 
 import org.eclipse.swt.graphics.GC;
@@ -12,8 +15,7 @@ public class StringValue extends Value {
 	}
 	
 	@Override
-	public void paint(GC gc, Value maximalValue, State executionState, int x, int y, int width,
-			int height) {
-		paintText('"' + value + '"', gc, executionState, x, y, width, height);
+	protected String getText() {
+		return "\"" + value + "\"";
 	}
 }

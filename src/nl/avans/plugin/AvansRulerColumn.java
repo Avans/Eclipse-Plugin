@@ -137,16 +137,17 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 		layout();
 		redraw();
 	}
-	
+
 	@Override
-	public void programExecutionChanged(final ProgramExecution newProgramExecution) {
+	public void programExecutionChanged(
+			final ProgramExecution newProgramExecution) {
 		Display.getDefault().asyncExec(new Runnable() {
 			@Override
 			public void run() {
 				displayProgramExecution(newProgramExecution);
 			}
 		});
-		
+
 	}
 
 	@Override
@@ -156,7 +157,7 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 			public void run() {
 				displayProgramExecution(null);
 			}
-		});		
+		});
 	}
 
 	/**
@@ -193,11 +194,22 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 		// Find a maximalValue, which is used for some data visualization in
 		// numeric steps
 		Value maximalValue = null;
+		ColumnStep.DisplayMode displayMode = ColumnStep.DisplayMode.FULL;
 		for (ColumnStep columnStep : columnSteps) {
-			if (columnStep.line == widgetLine
-					&& (maximalValue == null || columnStep.value
-							.compareTo(maximalValue) > 0)) {
-				maximalValue = columnStep.value;
+			if (columnStep.line == widgetLine) {
+
+				if (maximalValue == null
+						|| columnStep.value.compareTo(maximalValue) > 0) {
+					maximalValue = columnStep.value;
+				}
+
+				ColumnStep.DisplayMode preferredDisplayMode = columnStep
+						.getDisplayMode(gc);
+				
+				
+				if (preferredDisplayMode.priority < displayMode.priority) {
+					displayMode = preferredDisplayMode;
+				}
 			}
 		}
 
@@ -218,8 +230,8 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 					state = State.EXECUTED; // By default display as executed
 				}
 
-				columnStep
-						.paint(gc, maximalValue, linePixel, lineHeight, state);
+				columnStep.paint(gc, displayMode, maximalValue, linePixel,
+						lineHeight, state);
 			}
 		}
 	}
@@ -331,7 +343,8 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 	@Override
 	public void columnRemoved() {
 		System.out.println("Column removed");
-		ProgramExecutionManager.getDefault().removeProgramExecutionListener(this);
+		ProgramExecutionManager.getDefault().removeProgramExecutionListener(
+				this);
 	}
 
 	/**

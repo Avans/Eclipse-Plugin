@@ -21,6 +21,17 @@ public class ColumnStep {
 		}
 	}
 	
+	public enum DisplayMode {
+		DOT(0),
+		TRUNCATED(1),
+		FULL(2);
+		
+		public final int priority;
+		DisplayMode(int priority) {
+			this.priority = priority;
+		}
+	}
+	
 	public int index;
 	
 	// The line that this step is on (0-indexed)
@@ -33,11 +44,20 @@ public class ColumnStep {
 
 	public List<StepLine> stepLines = new ArrayList<StepLine>();
 
-	public void paint(GC gc, Value maximalValue, int linePixel, int lineHeight, State executionState) {
-		value.paint(gc, maximalValue, executionState, x, linePixel, width, lineHeight);
+	public void paint(GC gc, DisplayMode displayMode, Value maximalValue, int linePixel, int lineHeight, State executionState) {
+		value.paint(gc, displayMode, maximalValue, executionState, x, linePixel, width, lineHeight);
 	}
 
 	public boolean isHovering(int x_coordinate) {
 		return x <= x_coordinate && x_coordinate < x + width;
+	}
+	
+	private DisplayMode cachedDisplayMode;
+	
+	public DisplayMode getDisplayMode(GC gc) {
+		if(cachedDisplayMode == null) {
+			cachedDisplayMode = this.value.getPreferredDisplayMode(gc, width); 
+		}
+		return cachedDisplayMode;
 	}
 }
