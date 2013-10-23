@@ -36,10 +36,9 @@ public class StepLineAnnotationPainter implements IDrawingStrategy {
 			int y = textWidget.getLocationAtOffset(lineStartOffset).y;
 
 			gc.setFont(FONT);
-			gc.setBackground(stepLineAnnotation.isPrimary() ? BACKGROUND_COLOR : textWidget.getBackground());
 			gc.setForeground(TEXT_COLOR);
 			gc.drawText(stepLineAnnotation.getText(),
-					stepLineAnnotation.getTextOffset(), y);
+					stepLineAnnotation.getTextOffset(), y, true);
 		} else {
 			textWidget.redrawRange(offset, length, true);
 		}

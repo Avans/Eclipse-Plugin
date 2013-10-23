@@ -53,10 +53,9 @@ public class Value implements ValueDrawer, Comparable<Value> {
 	protected void paintText(String text, GC gc, State executionState, int x,
 			int y, int width, int height) {
 		gc.setFont(FONT);
-		gc.setBackground(new Color(null, 255, 255, 255));
 		gc.setForeground(executionState.color);
 
-		gc.drawText(text, x, y);
+		gc.drawText(text, x, y, true);
 	}
 
 	@Override
