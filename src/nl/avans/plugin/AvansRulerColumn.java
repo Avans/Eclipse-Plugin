@@ -25,9 +25,12 @@ import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.core.Launch;
+import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
@@ -43,6 +46,7 @@ import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.IVMRunner;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.launching.VMRunnerConfiguration;
+import org.eclipse.jdt.ui.JavaUI;
 import org.eclipse.jface.text.DocumentEvent;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IDocumentListener;
@@ -121,13 +125,18 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 		if (programExecution != null) {
 			// Create steps to be displayed in the ruler
 			int index = 0;
+			ICompilationUnit compilationUnit = (ICompilationUnit) JavaUI
+					.getEditorInputJavaElement(editor.getEditorInput());
+
 			for (Step step : programExecution.getSteps()) {
-				ColumnStep columnStep = new ColumnStep();
-				columnStep.line = step.line;
-				columnStep.index = index++;
-				columnStep.value = step.getValue();
-				columnStep.stepLines = step.getStepLines();
-				columnSteps.add(columnStep);
+				if (step.compilationUnit.equals(compilationUnit)) {
+					ColumnStep columnStep = new ColumnStep();
+					columnStep.line = step.line;
+					columnStep.index = index++;
+					columnStep.value = step.getValue();
+					columnStep.stepLines = step.getStepLines();
+					columnSteps.add(columnStep);
+				}
 			}
 		}
 
@@ -205,8 +214,7 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 
 				ColumnStep.DisplayMode preferredDisplayMode = columnStep
 						.getDisplayMode(gc);
-				
-				
+
 				if (preferredDisplayMode.priority < displayMode.priority) {
 					displayMode = preferredDisplayMode;
 				}
@@ -337,6 +345,11 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 	public void columnCreated() {
 		System.out.println("Column created");
 		ProgramExecutionManager.getDefault().addProgramExecutionListener(this);
+		
+		ProgramExecution programExecution = ProgramExecutionManager.getDefault().getProgramExecution();
+		if(programExecution != null) {
+			displayProgramExecution(programExecution);
+		}
 
 	}
 

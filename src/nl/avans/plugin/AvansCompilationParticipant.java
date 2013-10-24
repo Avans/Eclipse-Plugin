@@ -14,6 +14,8 @@ import nl.avans.plugin.debug.statement.StepStatement;
 import nl.avans.plugin.debug.statement.WhileStepStatement;
 import nl.avans.plugin.model.ProgramExecution;
 
+import org.eclipse.core.resources.IMarker;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.DebugPlugin;
@@ -64,9 +66,43 @@ public class AvansCompilationParticipant extends CompilationParticipant
 		return true;
 	}
 
+	private static boolean hasCompilationErrors(IJavaProject javaProject)
+			throws CoreException {
+		if (javaProject.hasBuildState()) {
+			IMarker[] problems = javaProject.getProject().findMarkers(
+					IMarker.PROBLEM, true, IResource.DEPTH_INFINITE);
+			
+			// check if any of these have a severity attribute that indicates an
+			// error
+			for (int problemsIndex = 0; problemsIndex < problems.length; problemsIndex++) {
+				if(IMarker.SEVERITY_ERROR == problems[problemsIndex]
+						.getAttribute(IMarker.SEVERITY, IMarker.SEVERITY_INFO))
+					return true;
+			}
+		}
+		return false;
+	}
+
 	@Override
 	public void buildFinished(IJavaProject project) {
 		try {
+			// Don't continue with projects that have syntax errors.
+			if (hasCompilationErrors(project))
+				return;
+
+			ILaunchConfiguration launchConfiguration = DebugPlugin.getDefault()
+					.getLaunchManager().getLaunchConfigurations()[0];
+
+			String mainTypeString = launchConfiguration.getAttribute(
+					"org.eclipse.jdt.launching.MAIN_TYPE", "");
+			IType mainType = project.findType(mainTypeString);
+
+			// It's possible the project doesn't have a main()
+			// method yet aight.
+			// So we just sit back and don't launch anything
+			if (mainType == null)
+				return;
+
 			/**
 			 * Remove any previous breakpoints
 			 */
@@ -116,27 +152,18 @@ public class AvansCompilationParticipant extends CompilationParticipant
 					} catch (CoreException e) {
 					}
 					if (classPath != null) {
-						ILaunchConfiguration launchConfiguration = DebugPlugin
-								.getDefault().getLaunchManager()
-								.getLaunchConfigurations()[0];
-
 						JavaSourceLookupDirector sourceLocator = new JavaSourceLookupDirector();
 						sourceLocator.initializeDefaults(launchConfiguration);
 
 						ILaunch launch = new Launch(null,
 								ILaunchManager.DEBUG_MODE, sourceLocator);
 
-						String mainTypeString = launchConfiguration
-								.getAttribute(
-										"org.eclipse.jdt.launching.MAIN_TYPE",
-										"");
-						IType mainType = project.findType(mainTypeString);
-
 						VMRunnerConfiguration vmConfig = new VMRunnerConfiguration(
 								mainType.getFullyQualifiedName(), classPath);
 
 						System.out.println("3 2 1 launch!");
 						vmRunner.run(vmConfig, launch, null);
+
 					}
 				}
 			}
@@ -224,16 +251,18 @@ public class AvansCompilationParticipant extends CompilationParticipant
 			else if (statement.getNodeType() == ASTNode.VARIABLE_DECLARATION_STATEMENT) {
 				stepStatement = new AssignmentStepStatement(
 						(VariableDeclarationStatement) statement, type);
-				
-			} else if(statement.getNodeType() == ASTNode.IF_STATEMENT) {
-				IfStatement ifStatement = (IfStatement)statement;
-				Block thenBlock = (Block)ifStatement.getThenStatement();
-				Block elseBlock = (Block)ifStatement.getElseStatement();
-				if(thenBlock != null)
-					breakpoints.addAll(getBreakpointsForStatements(thenBlock.statements(), type));
-				if(elseBlock != null)
-					breakpoints.addAll(getBreakpointsForStatements(elseBlock.statements(), type));
-				
+
+			} else if (statement.getNodeType() == ASTNode.IF_STATEMENT) {
+				IfStatement ifStatement = (IfStatement) statement;
+				Block thenBlock = (Block) ifStatement.getThenStatement();
+				Block elseBlock = (Block) ifStatement.getElseStatement();
+				if (thenBlock != null)
+					breakpoints.addAll(getBreakpointsForStatements(
+							thenBlock.statements(), type));
+				if (elseBlock != null)
+					breakpoints.addAll(getBreakpointsForStatements(
+							elseBlock.statements(), type));
+
 				stepStatement = new IfStepStatement(ifStatement, type);
 			}
 
@@ -243,10 +272,11 @@ public class AvansCompilationParticipant extends CompilationParticipant
 						.getExpression();
 
 				// Variable assignment
-				if(expression.getNodeType() == ASTNode.ASSIGNMENT) {
-					stepStatement = new AssignmentStepStatement(statement, type, (Assignment)expression);
+				if (expression.getNodeType() == ASTNode.ASSIGNMENT) {
+					stepStatement = new AssignmentStepStatement(statement,
+							type, (Assignment) expression);
 				}
-				
+
 				// Print statement
 				else if (expression.getNodeType() == ASTNode.METHOD_INVOCATION) {
 					MethodInvocation methodInvocation = (MethodInvocation) expression;

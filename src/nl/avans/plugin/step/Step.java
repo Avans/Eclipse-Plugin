@@ -11,7 +11,7 @@ import org.eclipse.jdt.core.ICompilationUnit;
 public class Step {
 	public int line;
 	
-	private ICompilationUnit compilationUnit;
+	public ICompilationUnit compilationUnit;
 
 	public List<StepLine> stepLines;
 

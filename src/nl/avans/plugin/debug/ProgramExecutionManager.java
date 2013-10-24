@@ -51,7 +51,10 @@ public class ProgramExecutionManager {
 
 	public void removeProgramExecutionListener(ProgramExecutionListener listener) {
 		listeners.remove(listener);
-		
+	}
+	
+	public ProgramExecution getProgramExecution() {
+		return currentProgramExecution;
 	}
 	
 	

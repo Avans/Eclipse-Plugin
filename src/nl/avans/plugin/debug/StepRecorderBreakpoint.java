@@ -16,6 +16,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.model.IVariable;
+import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.debug.core.IJavaStackFrame;
@@ -26,6 +27,7 @@ public class StepRecorderBreakpoint extends JavaLineBreakpoint {
 
 	private ProgramExecution programExecution;
 	private StepStatement statement;
+	private ICompilationUnit compilationUnit;
 
 	public StepRecorderBreakpoint(IType type, StepStatement statement)
 			throws CoreException {
@@ -33,6 +35,7 @@ public class StepRecorderBreakpoint extends JavaLineBreakpoint {
 				.getOneIndexedLineNumber(), statement.getCharStart(), statement
 				.getCharEnd(), -1, false, new HashMap<String, Object>());
 		
+		this.compilationUnit = type.getCompilationUnit();
 		this.statement = statement;
 
 		/**
@@ -50,6 +53,7 @@ public class StepRecorderBreakpoint extends JavaLineBreakpoint {
 	public void record(IJavaStackFrame stackframe) {
 		try {
 			Step step = statement.createStepFromThread(stackframe);
+			step.compilationUnit = compilationUnit;
 			if(step != null)
 				programExecution.addStep(step);
 		} catch (DebugException e) {
