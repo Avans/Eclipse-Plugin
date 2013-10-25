@@ -24,5 +24,13 @@
             id="Eclipse-Plugin.compilationParticipant1">
       </compilationParticipant>
    </extension>
+   <extension
+         point="org.eclipse.ui.views">
+         <view
+               id="Eclipse-Plugin.view1"
+               name="Avans"
+               class="nl.avans.plugin.view.AvansView">
+         </view>
+   </extension>
    
 </plugin>
