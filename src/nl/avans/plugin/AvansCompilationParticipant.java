@@ -62,6 +62,8 @@ public class AvansCompilationParticipant extends CompilationParticipant
 
 	private ProgramExecution programExecution;
 
+	private static final int MAX_DEBUG_TIME = 15 * 1000;
+
 	@Override
 	public boolean isActive(IJavaProject project) {
 		return true;
@@ -72,11 +74,11 @@ public class AvansCompilationParticipant extends CompilationParticipant
 		if (javaProject.hasBuildState()) {
 			IMarker[] problems = javaProject.getProject().findMarkers(
 					IMarker.PROBLEM, true, IResource.DEPTH_INFINITE);
-			
+
 			// check if any of these have a severity attribute that indicates an
 			// error
 			for (int problemsIndex = 0; problemsIndex < problems.length; problemsIndex++) {
-				if(IMarker.SEVERITY_ERROR == problems[problemsIndex]
+				if (IMarker.SEVERITY_ERROR == problems[problemsIndex]
 						.getAttribute(IMarker.SEVERITY, IMarker.SEVERITY_INFO))
 					return true;
 			}
@@ -91,19 +93,20 @@ public class AvansCompilationParticipant extends CompilationParticipant
 			if (hasCompilationErrors(project))
 				return;
 			ILaunchConfiguration launchConfiguration = null;
-			
-			for(ILaunchConfiguration conf : DebugPlugin.getDefault()
+
+			for (ILaunchConfiguration conf : DebugPlugin.getDefault()
 					.getLaunchManager().getLaunchConfigurations()) {
-				if(conf.getAttribute("org.eclipse.jdt.launching.PROJECT_ATTR", "").equals(project.getElementName())) {
+				if (conf.getAttribute("org.eclipse.jdt.launching.PROJECT_ATTR",
+						"").equals(project.getElementName())) {
 					launchConfiguration = conf;
 				}
-				
+
 			}
-			
+
 			// No launch configuration exists yet
-			if(launchConfiguration == null)
+			if (launchConfiguration == null)
 				return;
-			
+
 			String mainTypeString = launchConfiguration.getAttribute(
 					"org.eclipse.jdt.launching.MAIN_TYPE", "");
 			IType mainType = project.findType(mainTypeString);
@@ -166,7 +169,7 @@ public class AvansCompilationParticipant extends CompilationParticipant
 						JavaSourceLookupDirector sourceLocator = new JavaSourceLookupDirector();
 						sourceLocator.initializeDefaults(launchConfiguration);
 
-						ILaunch launch = new Launch(null,
+						final ILaunch launch = new Launch(null,
 								ILaunchManager.DEBUG_MODE, sourceLocator);
 
 						VMRunnerConfiguration vmConfig = new VMRunnerConfiguration(
@@ -174,6 +177,31 @@ public class AvansCompilationParticipant extends CompilationParticipant
 
 						System.out.println("3 2 1 launch!");
 						vmRunner.run(vmConfig, launch, null);
+
+						/**
+						 * Start insurance thread so that we can stop the launch
+						 * when it exceeds a maximum execution time.
+						 */
+						new Thread(new Runnable() {
+							@Override
+							public void run() {
+								try {
+									Thread.sleep(MAX_DEBUG_TIME);
+								} catch (InterruptedException e) {
+								}
+
+								// Terminate if necessary
+								try {
+									if (!launch.isTerminated()) {
+										System.out
+												.println("Terminating with extreme prejudice...");
+										launch.terminate();
+									}
+								} catch (DebugException e) {
+									e.printStackTrace();
+								}
+							}
+						}).start();
 
 					}
 				}
