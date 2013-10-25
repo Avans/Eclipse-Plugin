@@ -2,6 +2,7 @@ package nl.avans.plugin;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import nl.avans.plugin.debug.JavaDebuggerListener;
 import nl.avans.plugin.debug.JavaDebuggerListener.TerminatorListener;
@@ -89,10 +90,20 @@ public class AvansCompilationParticipant extends CompilationParticipant
 			// Don't continue with projects that have syntax errors.
 			if (hasCompilationErrors(project))
 				return;
-
-			ILaunchConfiguration launchConfiguration = DebugPlugin.getDefault()
-					.getLaunchManager().getLaunchConfigurations()[0];
-
+			ILaunchConfiguration launchConfiguration = null;
+			
+			for(ILaunchConfiguration conf : DebugPlugin.getDefault()
+					.getLaunchManager().getLaunchConfigurations()) {
+				if(conf.getAttribute("org.eclipse.jdt.launching.PROJECT_ATTR", "").equals(project.getElementName())) {
+					launchConfiguration = conf;
+				}
+				
+			}
+			
+			// No launch configuration exists yet
+			if(launchConfiguration == null)
+				return;
+			
 			String mainTypeString = launchConfiguration.getAttribute(
 					"org.eclipse.jdt.launching.MAIN_TYPE", "");
 			IType mainType = project.findType(mainTypeString);

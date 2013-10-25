@@ -53,9 +53,11 @@ public class StepRecorderBreakpoint extends JavaLineBreakpoint {
 	public void record(IJavaStackFrame stackframe) {
 		try {
 			Step step = statement.createStepFromThread(stackframe);
-			step.compilationUnit = compilationUnit;
-			if(step != null)
+			if(step != null) {
+				step.compilationUnit = compilationUnit;
 				programExecution.addStep(step);
+			}
+			
 		} catch (DebugException e) {
 			e.printStackTrace();
 		}
