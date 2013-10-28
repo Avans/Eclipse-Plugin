@@ -33,7 +33,7 @@ public class LoopingSegment {
 	}
 
 	public void addColumnStepIfCorrectLine(ColumnStep columnStep) {
-		if (columnStep.line >= line && columnStep.line < line + linecount) {
+		if (columnStep.step.line >= line && columnStep.step.line < line + linecount) {
 			addColumnStep(columnStep);
 		}
 	}
@@ -62,12 +62,12 @@ public class LoopingSegment {
 			ColumnStep columnStep = columnSteps.get(i);
 			columnStep.x = (int) (i * stepWidth);
 
-			if (!remainingWidth.containsKey(columnStep.line)) {
-				remainingWidth.put(columnStep.line, width);
+			if (!remainingWidth.containsKey(columnStep.getLine())) {
+				remainingWidth.put(columnStep.getLine(), width);
 			}
-			columnStep.width = remainingWidth.get(columnStep.line)
+			columnStep.width = remainingWidth.get(columnStep.getLine())
 					- columnStep.x;
-			remainingWidth.put(columnStep.line, columnStep.x);
+			remainingWidth.put(columnStep.getLine(), columnStep.x);
 		}
 	}
 

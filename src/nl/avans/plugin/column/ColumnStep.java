@@ -6,6 +6,7 @@ import java.util.List;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.GC;
 
+import nl.avans.plugin.step.Step;
 import nl.avans.plugin.ui.stepline.StepLine;
 import nl.avans.plugin.value.Value;
 
@@ -33,19 +34,14 @@ public class ColumnStep {
 	}
 	
 	public int index;
-	
-	// The line that this step is on (0-indexed)
-	public int line;
-	
+		
 	// Position and size on the line in the ruler
 	public int x, width;
 	
-	public Value value;
-
-	public List<StepLine> stepLines = new ArrayList<StepLine>();
+	public Step step;
 
 	public void paint(GC gc, DisplayMode displayMode, Value maximalValue, int linePixel, int lineHeight, State executionState) {
-		value.paint(gc, displayMode, maximalValue, executionState, x, linePixel, width, lineHeight);
+		step.value.paint(gc, displayMode, maximalValue, executionState, x, linePixel, width, lineHeight);
 	}
 
 	public boolean isHovering(int x_coordinate) {
@@ -56,8 +52,12 @@ public class ColumnStep {
 	
 	public DisplayMode getDisplayMode(GC gc) {
 		if(cachedDisplayMode == null) {
-			cachedDisplayMode = this.value.getPreferredDisplayMode(gc, width); 
+			cachedDisplayMode = this.step.value.getPreferredDisplayMode(gc, width); 
 		}
 		return cachedDisplayMode;
+	}
+
+	public int getLine() {
+		return step.line;
 	}
 }

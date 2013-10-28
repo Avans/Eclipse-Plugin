@@ -131,10 +131,8 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 			for (Step step : programExecution.getSteps()) {
 				if (step.compilationUnit.equals(compilationUnit)) {
 					ColumnStep columnStep = new ColumnStep();
-					columnStep.line = step.line;
 					columnStep.index = index++;
-					columnStep.value = step.getValue();
-					columnStep.stepLines = step.getStepLines();
+					columnStep.step = step;
 					columnSteps.add(columnStep);
 				}
 			}
@@ -205,11 +203,11 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 		Value maximalValue = null;
 		ColumnStep.DisplayMode displayMode = ColumnStep.DisplayMode.FULL;
 		for (ColumnStep columnStep : columnSteps) {
-			if (columnStep.line == widgetLine) {
+			if (columnStep.step.line == widgetLine) {
 
 				if (maximalValue == null
-						|| columnStep.value.compareTo(maximalValue) > 0) {
-					maximalValue = columnStep.value;
+						|| columnStep.step.value.compareTo(maximalValue) > 0) {
+					maximalValue = columnStep.step.value;
 				}
 
 				ColumnStep.DisplayMode preferredDisplayMode = columnStep
@@ -223,7 +221,7 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 
 		// Draw each columnStep in this line
 		for (ColumnStep columnStep : columnSteps) {
-			if (columnStep.line == widgetLine) {
+			if (columnStep.step.line == widgetLine) {
 				State state;
 
 				if (columnStep == activeColumnStep) {
@@ -345,9 +343,10 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 	public void columnCreated() {
 		System.out.println("Column created");
 		ProgramExecutionManager.getDefault().addProgramExecutionListener(this);
-		
-		ProgramExecution programExecution = ProgramExecutionManager.getDefault().getProgramExecution();
-		if(programExecution != null) {
+
+		ProgramExecution programExecution = ProgramExecutionManager
+				.getDefault().getProgramExecution();
+		if (programExecution != null) {
 			displayProgramExecution(programExecution);
 		}
 
@@ -380,9 +379,13 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 			activeColumnStep = columnStep;
 
 			if (activeColumnStep != null) {
-				stepLineDisplayer.showStepLines(activeColumnStep.stepLines);
+				stepLineDisplayer
+						.showStepLines(activeColumnStep.step.stepLines);
+				ProgramExecutionManager.getDefault().setProgramState(
+						columnStep.step.state);
 			} else {
 				stepLineDisplayer.removeAllStepLines();
+				ProgramExecutionManager.getDefault().removeProgramState();
 			}
 			redraw();
 		}
@@ -414,7 +417,7 @@ public class AvansRulerColumn extends AbstractRulerColumn implements
 		// Normal step hovering: Checks if the mouse is hovering over the
 		// paintable area of the column step.
 		for (ColumnStep columnStep : columnSteps) {
-			if (columnStep.line == line && columnStep.isHovering(x)) {
+			if (columnStep.step.line == line && columnStep.isHovering(x)) {
 				return columnStep;
 			}
 		}

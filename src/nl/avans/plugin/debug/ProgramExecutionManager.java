@@ -12,6 +12,11 @@ public class ProgramExecutionManager {
 		public void programExecutionRemoved();
 	}
 	
+	public interface ProgramStateListener {
+		public void programStateChanged(State newState);
+		public void programStateRemoved();
+	}
+	
 	/**
 	 * Allow access to the manager from any context
 	 */
@@ -22,10 +27,10 @@ public class ProgramExecutionManager {
 	}
 	
 	private ProgramExecution currentProgramExecution;
+	private State currentProgramState;
 	
 	private Set<ProgramExecutionListener> listeners = new HashSet<ProgramExecutionListener>();
-	
-	
+	private Set<ProgramStateListener> stateListeners = new HashSet<ProgramStateListener>();
 	
 	public void setProgramExecution(ProgramExecution programExecution) {
 		if(programExecution != currentProgramExecution) {
@@ -36,6 +41,20 @@ public class ProgramExecutionManager {
 					listener.programExecutionRemoved();
 				} else {
 					listener.programExecutionChanged(programExecution);
+				}
+			}
+		}
+	}
+	
+	public void setProgramState(State state) {
+		if(state != currentProgramState) {
+			this.currentProgramState = state;
+			
+			for(ProgramStateListener listener : stateListeners) {
+				if(state == null) {
+					listener.programStateRemoved();
+				} else {
+					listener.programStateChanged(state);
 				}
 			}
 		}
@@ -56,6 +75,18 @@ public class ProgramExecutionManager {
 	public ProgramExecution getProgramExecution() {
 		return currentProgramExecution;
 	}
-	
+
+	public void removeProgramState() {
+		setProgramState(null);
+		
+	}
+
+	public void removeProgramStateListener(ProgramStateListener listener) {
+		stateListeners.remove(listener);
+	}
+
+	public void addProgramStateListener(ProgramStateListener listener) {
+		stateListeners.add(listener);
+	}
 	
 }

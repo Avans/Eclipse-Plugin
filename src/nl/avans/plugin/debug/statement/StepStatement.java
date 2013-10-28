@@ -3,6 +3,7 @@ package nl.avans.plugin.debug.statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import nl.avans.plugin.debug.State;
 import nl.avans.plugin.step.Step;
 import nl.avans.plugin.ui.stepline.StepLine;
 import nl.avans.plugin.value.BooleanValue;
@@ -44,13 +45,14 @@ public class StepStatement {
 		return line;
 	}
 	
-	
+	private State previousState = null;
 
 	public Step createStepFromThread(IJavaStackFrame stackframe) throws DebugException {
 		Step step = new Step();
 		step.line = line;
 		step.value = new BooleanValue(true);
 		step.stepLines = new ArrayList<StepLine>();
+		step.state = new State(stackframe, previousState);
 		return step;
 	}
 
