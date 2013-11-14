@@ -25,9 +25,7 @@ public class StackFigure extends RectangleFigure {
 		// Add children of the stack as stackframefigures
 		for(StackFrame stackframe : stack) {
 			StackFrameFigure stf = new StackFrameFigure(stackframe);
-			StackFrameFigure stf2 = new StackFrameFigure(stackframe);
 			add(stf);
-			add(stf2);
 		}
 	}
 }

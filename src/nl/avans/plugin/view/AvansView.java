@@ -69,7 +69,7 @@ public class AvansView extends ViewPart implements ProgramStateListener {
 
 		
 		// Create a test model
-		Stack stack = new Stack();
+		/*Stack stack = new Stack();
 		StackFrame stackframe = new StackFrame();
 		Variable foo = new Variable("foo", new IntValue(5));
 		stackframe.addVariable(foo);
@@ -81,7 +81,7 @@ public class AvansView extends ViewPart implements ProgramStateListener {
 		Figure heap = new RectangleFigure();
 		heap.setBackgroundColor(new org.eclipse.swt.graphics.Color(null, 0, 0, 255));
 		heap.setSize(50, 100);
-		rf.add(heap, BorderLayout.CENTER);
+		rf.add(heap, BorderLayout.CENTER);*/
 
 		// AvansView avans = new AvansView();
 		// avans.createPartControl(canvas);
@@ -103,73 +103,16 @@ public class AvansView extends ViewPart implements ProgramStateListener {
 		ProgramExecutionManager.getDefault().removeProgramStateListener(this);
 	}
 
+	IFigure root;
 	public void createPartControl(Composite parent) {
 		ProgramExecutionManager.getDefault().addProgramStateListener(this);
-
-		// Graph will hold all other objects
-		graph = new Graph(parent, SWT.NONE);
-		// now a few nodes
-		GraphNode node1 = new GraphNode(graph, SWT.NONE, "Jim");
-		GraphNode node2 = new GraphNode(graph, SWT.NONE, "Jack");
-		GraphNode node3 = new GraphNode(graph, SWT.NONE, "Joe");
-		GraphNode node4 = new GraphNode(graph, SWT.NONE, "Bill");
-
-		node1.setSize(100, 100);
-
-		GraphContainer container = new GraphContainer(graph, ZestStyles.NONE);
-
-		GraphNode node5 = new GraphNode(container, SWT.NONE, "Paul");
-
-		// Lets have a directed connection
-		new GraphConnection(graph, ZestStyles.CONNECTIONS_DIRECTED, node1,
-				node2);
-		// Lets have a dotted graph connection
-		new GraphConnection(graph, ZestStyles.CONNECTIONS_DOT, node2, node3);
-		// Standard connection
-		new GraphConnection(graph, SWT.NONE, node3, node1);
-		// Change line color and line width
-		GraphConnection graphConnection = new GraphConnection(graph, SWT.NONE,
-				node1, node4);
-		graphConnection.changeLineColor(parent.getDisplay().getSystemColor(
-				SWT.COLOR_GREEN));
-		// Also set a text
-		graphConnection.setText("This is a text");
-		graphConnection.setHighlightColor(parent.getDisplay().getSystemColor(
-				SWT.COLOR_RED));
-		graphConnection.setLineWidth(3);
-
-		graph.setLayoutAlgorithm(new SpringLayoutAlgorithm(
-				LayoutStyles.NO_LAYOUT_NODE_RESIZING), true);
-		graph.setLayoutAlgorithm(new SpringLayoutAlgorithm() {
-
-		}, true);
-		graph.getLayoutAlgorithm();
-		// Selection listener on graphConnect or GraphNode is not supported
-		// see https://bugs.eclipse.org/bugs/show_bug.cgi?id=236528
-		graph.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				System.out.println(e);
-			}
-
-		});
-	}
-
-	public void setLayoutManager() {
-		switch (layout) {
-		case 1:
-			graph.setLayoutAlgorithm(new TreeLayoutAlgorithm(
-					LayoutStyles.NO_LAYOUT_NODE_RESIZING), true);
-			layout++;
-			break;
-		case 2:
-			graph.setLayoutAlgorithm(new SpringLayoutAlgorithm(
-					LayoutStyles.NO_LAYOUT_NODE_RESIZING), true);
-			layout = 1;
-			break;
-
-		}
-
+		
+		// Create drawable surface
+		Canvas canvas = new Canvas(parent, SWT.NONE);
+		LightweightSystem lws = new LightweightSystem(canvas);
+		root = lws.getRootFigure();
+		root.setBackgroundColor(new org.eclipse.swt.graphics.Color(null, 255, 0, 0));
+		root.setLayoutManager(new BorderLayout());
 	}
 
 	/**
@@ -180,15 +123,30 @@ public class AvansView extends ViewPart implements ProgramStateListener {
 	}
 
 	@Override
-	public void programStateChanged(State newState) {
-
-		System.out.println("State: " + newState);
+	public void programStateChanged(State state) {
+		// Remove previous figures
+		if(stackFigure != null) {
+			root.remove(stackFigure);
+		}
+		
+		stackFigure = new StackFigure(state.getStack());
+		
+		root.add(stackFigure, BorderLayout.LEFT);
+		
+		System.out.println("State: " + state);
 
 	}
+	
+	StackFigure stackFigure;
 
 	@Override
 	public void programStateRemoved() {
 		System.out.println("Removed state!");
+		
+		if(stackFigure != null) {
+			root.remove(stackFigure);
+			stackFigure = null;
+		}
 
 	}
 }

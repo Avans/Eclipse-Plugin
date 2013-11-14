@@ -52,7 +52,7 @@ public class StepStatement {
 		step.line = line;
 		step.value = new BooleanValue(true);
 		step.stepLines = new ArrayList<StepLine>();
-		step.state = new State(stackframe, previousState);
+		step.state = new State(stackframe.getThread().getStackFrames());
 		return step;
 	}
 
